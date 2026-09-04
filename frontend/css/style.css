@@ -1,0 +1,188 @@
+/* ========================================
+   DeMart - Global Styles
+   ======================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #FAF9F6;
+    color: #222222;
+}
+
+
+/* ========================================
+   Header
+   ======================================== */
+
+.site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    background-color: #171717;
+    color: #FFFFFF;
+
+    padding: 20px 40px;
+}
+
+.brand {
+    margin: 0;
+    color: #F3C370;
+    font-size: 32px;
+}
+
+
+/* ========================================
+   Navigation
+   ======================================== */
+
+.main-nav {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+.main-nav a {
+    color: #FFFFFF;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+.main-nav a:hover {
+    color: #F3C370;
+}
+
+
+/* ========================================
+   Main Content
+   ======================================== */
+
+main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+
+/* ========================================
+   Sections
+   ======================================== */
+
+section {
+    background-color: #FFFFFF;
+    padding: 40px;
+    margin-bottom: 30px;
+    border-radius: 12px;
+}
+
+section h2 {
+    margin-top: 0;
+    color: #171717;
+}
+
+
+/* ========================================
+   Hero Section
+   ======================================== */
+
+.hero {
+    text-align: center;
+
+    padding: 70px 40px;
+
+    background-color: #171717;
+    color: #FFFFFF;
+}
+
+.hero h2 {
+    color: #F3C370;
+    font-size: 40px;
+}
+
+.hero p {
+    color: #E5E1D8;
+    font-size: 18px;
+}
+
+
+/* ========================================
+   Buttons
+   ======================================== */
+
+.hero a {
+    display: inline-block;
+
+    margin-top: 20px;
+    padding: 14px 30px;
+
+    background-color: #C9A227;
+    color: #171717;
+
+    text-decoration: none;
+    font-weight: bold;
+
+    border-radius: 6px;
+}
+
+.hero a:hover {
+    background-color: #F3C370;
+}
+
+
+/* ========================================
+   Featured Categories
+   ======================================== */
+
+.featured-categories {
+    text-align: center;
+}
+
+.category-card {
+    display: inline-block;
+    vertical-align: top;
+
+    width: 30%;
+    margin: 1%;
+
+    padding: 25px;
+
+    background-color: #FFFFFF;
+
+    border: 1px solid #E5E1D8;
+    border-radius: 10px;
+}
+
+.category-card h3 {
+    color: #C9A227;
+}
+
+.category-card p {
+    color: #6B6B6B;
+    line-height: 1.6;
+}
+
+
+/* ========================================
+   Footer
+   ======================================== */
+
+footer {
+    padding: 25px;
+
+    background-color: #171717;
+    color: #E5E1D8;
+
+    text-align: center;
+}
+
+footer p {
+    margin: 0;
+}
