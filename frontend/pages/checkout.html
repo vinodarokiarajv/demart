@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Checkout - DeMart</title>
+
+    <link rel="icon" type="image/png" href="../assets/icons/demart-icon.png">
+
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+
+    <header class="site-header">
+
+        <h1 class="brand">DeMart</h1>
+
+        <nav class="main-nav">
+            <a href="../index.html">Home</a>
+            <a href="products.html">Products</a>
+            <a href="login.html">Login</a>
+            <a href="register.html">Register</a>
+            <a href="cart.html">Cart</a>
+        </nav>
+
+    </header>
+
+
+    <main>
+
+        <section class="checkout-page">
+
+            <h2>Checkout</h2>
+
+            <div class="checkout-container">
+
+                <div class="checkout-form">
+
+                    <div class="checkout-section">
+
+                        <h3>Contact Information</h3>
+
+                        <div class="form-group">
+
+                            <label for="email">
+                                Email Address
+                            </label>
+
+                            <input
+                                id="email"
+                                type="email"
+                                placeholder="you@example.com"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="checkout-section">
+
+                        <h3>Shipping Address</h3>
+
+                        <div class="form-row">
+
+                            <div class="form-group">
+
+                                <label for="first-name">
+                                    First Name
+                                </label>
+
+                                <input
+                                    id="first-name"
+                                    type="text"
+                                    placeholder="First name"
+                                >
+
+                            </div>
+
+                            <div class="form-group">
+
+                                <label for="last-name">
+                                    Last Name
+                                </label>
+
+                                <input
+                                    id="last-name"
+                                    type="text"
+                                    placeholder="Last name"
+                                >
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="street">
+                                Street Address
+                            </label>
+
+                            <input
+                                id="street"
+                                type="text"
+                                placeholder="Street and house number"
+                            >
+
+                        </div>
+
+
+                        <div class="form-row">
+
+                            <div class="form-group">
+
+                                <label for="postal-code">
+                                    Postal Code
+                                </label>
+
+                                <input
+                                    id="postal-code"
+                                    type="text"
+                                    placeholder="Postal code"
+                                >
+
+                            </div>
+
+                            <div class="form-group">
+
+                                <label for="city">
+                                    City
+                                </label>
+
+                                <input
+                                    id="city"
+                                    type="text"
+                                    placeholder="City"
+                                >
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="country">
+                                Country
+                            </label>
+
+                            <select id="country">
+
+                                <option value="">
+                                    Select Country
+                                </option>
+
+                                <option value="germany">
+                                    Germany
+                                </option>
+
+                                <option value="france">
+                                    France
+                                </option>
+
+                                <option value="netherlands">
+                                    Netherlands
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="checkout-section">
+
+                        <h3>Delivery Method</h3>
+
+                        <div class="delivery-option">
+
+                            <input
+                                id="standard-delivery"
+                                type="radio"
+                                name="delivery"
+                                value="standard"
+                                checked
+                            >
+
+                            <label for="standard-delivery">
+
+                                <strong>Standard Delivery</strong>
+
+                                <span>
+                                    3–5 business days — €4.99
+                                </span>
+
+                            </label>
+
+                        </div>
+
+
+                        <div class="delivery-option">
+
+                            <input
+                                id="express-delivery"
+                                type="radio"
+                                name="delivery"
+                                value="express"
+                            >
+
+                            <label for="express-delivery">
+
+                                <strong>Express Delivery</strong>
+
+                                <span>
+                                    1–2 business days — €9.99
+                                </span>
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="checkout-section">
+
+                        <h3>Payment Method</h3>
+
+                        <div class="payment-option">
+
+                            <input
+                                id="card-payment"
+                                type="radio"
+                                name="payment"
+                                value="card"
+                                checked
+                            >
+
+                            <label for="card-payment">
+                                Credit / Debit Card
+                            </label>
+
+                        </div>
+
+
+                        <div class="payment-option">
+
+                            <input
+                                id="paypal-payment"
+                                type="radio"
+                                name="payment"
+                                value="paypal"
+                            >
+
+                            <label for="paypal-payment">
+                                PayPal
+                            </label>
+
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="place-order-button"
+                    >
+                        Place Order
+                    </button>
+
+                </div>
+
+
+                <aside class="checkout-summary">
+
+                    <h3>Order Summary</h3>
+
+                    <div class="checkout-product">
+
+                        <div>
+                            <strong>Wireless Headphones</strong>
+                            <span>Qty: 1</span>
+                        </div>
+
+                        <span>€79.99</span>
+
+                    </div>
+
+
+                    <div class="checkout-product">
+
+                        <div>
+                            <strong>Classic Sneakers</strong>
+                            <span>Qty: 1</span>
+                        </div>
+
+                        <span>€64.99</span>
+
+                    </div>
+
+
+                    <div class="summary-row">
+
+                        <span>Subtotal</span>
+                        <span>€144.98</span>
+
+                    </div>
+
+
+                    <div class="summary-row">
+
+                        <span>Shipping</span>
+                        <span>€4.99</span>
+
+                    </div>
+
+
+                    <div class="summary-row checkout-total">
+
+                        <strong>Total</strong>
+                        <strong>€149.97</strong>
+
+                    </div>
+
+                </aside>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <footer>
+
+        <p>&copy; 2026 DeMart. All rights reserved.</p>
+
+    </footer>
+
+
+    <script src="../js/app.js"></script>
+
+</body>
+
+</html>
