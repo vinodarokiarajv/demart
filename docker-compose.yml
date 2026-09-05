@@ -1,0 +1,19 @@
+services:
+
+  postgres:
+    image: postgres:18
+    container_name: demart-postgres
+
+    environment:
+      POSTGRES_DB: demart
+      POSTGRES_USER: demart_user
+      POSTGRES_PASSWORD: demart_password
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - demart-postgres-data:/var/lib/postgresql
+
+volumes:
+  demart-postgres-data:
