@@ -17,10 +17,30 @@ body {
     color: #222222;
 }
 
+.logo-de {
+    background: linear-gradient(
+        to bottom,
+        #000000 0%,
+        #000000 33%,
+        #DD0000 33%,
+        #DD0000 66%,
+        #FFCE00 66%,
+        #FFCE00 100%
+    );
 
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
 /* ========================================
    Header
    ======================================== */
+
+header {
+    position: sticky !important;
+    top: 0;
+    z-index: 9999;
+}
 
 .site-header {
     display: flex;
