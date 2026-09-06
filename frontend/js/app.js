@@ -81,3 +81,80 @@ if (registerForm) {
     });
 
 }
+
+const loginForm = document.getElementById("login-form");
+
+if (loginForm) {
+
+    loginForm.addEventListener("submit", async function (event) {
+
+        event.preventDefault();
+
+        const emailInput = document.getElementById("login-email");
+        const passwordInput = document.getElementById("login-password");
+        const messageElement = document.getElementById("login-message");
+
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+
+        if (email === "") {
+
+            messageElement.textContent = "Email is required";
+            return;
+
+        }
+
+        if (password === "") {
+
+            messageElement.textContent = "Password is required";
+            return;
+
+        }
+
+        try {
+
+            const response = await fetch(
+                "http://localhost:3000/api/auth/login",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                }
+            );
+
+            const result = await response.json();
+
+            if (response.ok) {
+
+                messageElement.textContent = result.message;
+
+                console.log("Login successful");
+                console.log(result.user);
+
+            } else {
+
+                messageElement.textContent = result.message;
+
+                console.log("Login failed:", result.message);
+
+            }
+
+        } catch (error) {
+
+            console.error("Login request failed:", error);
+
+            messageElement.textContent =
+                "Unable to connect to the server";
+
+        }
+
+    });
+
+}
