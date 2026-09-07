@@ -248,6 +248,14 @@ footer p {
     color: #6B6B6B;
 }
 
+.product-image img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+
 .product-info {
     padding: 20px;
 }
@@ -1092,4 +1100,77 @@ footer p {
 
 .terms-option a:hover {
     color: #C9A227;
+}
+
+/* ========================================
+   Account Page
+   ======================================== */
+
+.account-container {
+    max-width: 900px;
+    margin: 0 auto;
+
+    padding: 40px 20px 60px;
+}
+
+.account-container > h1 {
+    margin: 0 0 30px;
+
+    color: #171717;
+
+    font-size: 32px;
+}
+
+
+/* ========================================
+   Account Cards
+   ======================================== */
+
+.account-card {
+    padding: 30px;
+
+    margin-bottom: 25px;
+
+    background-color: #FFFFFF;
+
+    border: 1px solid #E5E1D8;
+    border-radius: 10px;
+}
+
+.account-card h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+
+    color: #171717;
+}
+
+.account-info p {
+    margin: 12px 0;
+
+    color: #222222;
+}
+
+
+/* ========================================
+   Account Button
+   ======================================== */
+
+.account-button {
+    display: inline-block;
+
+    margin-top: 10px;
+
+    padding: 12px 20px;
+
+    background-color: #C9A227;
+    color: #171717;
+
+    border-radius: 6px;
+
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.account-button:hover {
+    background-color: #F3C370;
 }
