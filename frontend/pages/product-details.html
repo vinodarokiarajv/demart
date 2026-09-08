@@ -30,83 +30,51 @@
 
 
     <main>
+    <div id="product-error" class="product-error" hidden>
+        <h2>Product Not Found</h2>
+        <p>
+            The product you're looking for doesn't exist or is no longer available.
+        </p>
+        <a href="products.html">Back to Products</a>
+    </div>
+    <section class="product-details">
+        <div class="product-details-image">
+            <img id="product-image" src="" alt="">
+        </div>
 
-        <section class="product-details">
+        <div class="product-details-info">
+            <p id="product-category" class="product-category"></p>
 
-            <div class="product-details-image">
+            <h2 id="product-name"></h2>
 
-                <span>Product Image</span>
+            <p id="product-rating" class="product-rating"></p>
 
+            <p id="product-price" class="product-price"></p>
+
+            <p id="product-description" class="product-description"></p>
+
+            <div class="product-quantity">
+                <label for="quantity">Quantity</label>
+                <input id="quantity" type="number" value="1" min="1">
             </div>
 
+            <div class="product-detail-actions">
+                <button type="button">
+                    Add to Cart
+                </button>
 
-            <div class="product-details-info">
-
-                <p class="product-category">Electronics</p>
-
-                <h2>Wireless Headphones</h2>
-
-                <p class="product-rating">★★★★★</p>
-
-                <p class="product-price">€79.99</p>
-
-                <p class="product-description">
-                    Experience high-quality sound with our wireless headphones.
-                    Designed for everyday use with comfortable ear cushions,
-                    reliable Bluetooth connectivity, and long-lasting battery life.
-                </p>
-
-
-                <div class="product-quantity">
-
-                    <label for="quantity">Quantity</label>
-
-                    <input
-                        id="quantity"
-                        type="number"
-                        value="1"
-                        min="1"
-                    >
-
-                </div>
-
-
-                <div class="product-detail-actions">
-
-                    <button type="button">
-                        Add to Cart
-                    </button>
-
-                    <a href="cart.html">
-                        View Cart
-                    </a>
-
-                </div>
-
+                <a href="cart.html">
+                    View Cart
+                </a>
             </div>
+        </div>
+    </section>
 
-        </section>
-
-
-        <section class="product-description-section">
-
-            <h2>Product Information</h2>
-
-            <p>
-                These wireless headphones are designed for music, calls,
-                entertainment, and everyday use.
-            </p>
-
-            <ul>
-                <li>Wireless Bluetooth connectivity</li>
-                <li>Long-lasting battery</li>
-                <li>Comfortable over-ear design</li>
-                <li>Built-in microphone</li>
-            </ul>
-
-        </section>
-
-    </main>
+    <section class="product-description-section">
+        <h2>Product Information</h2>
+        <p id="product-information"></p>
+    </section>
+</main>
 
 
     <footer>

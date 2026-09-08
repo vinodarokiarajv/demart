@@ -12,6 +12,11 @@ html {
 
 body {
     margin: 0;
+    min-height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+
     font-family: Arial, Helvetica, sans-serif;
     background-color: #FAF9F6;
     color: #222222;
@@ -86,8 +91,8 @@ header {
    ======================================== */
 
 main {
-    max-width: 1200px;
-    margin: 0 auto;
+    flex: 1;
+    width: 100%;
     padding: 40px 20px;
 }
 
@@ -225,8 +230,8 @@ footer p {
 }
 
 .product-card {
-    flex: 1;
-    min-width: 250px;
+    flex: 0 1 260px;
+    max-width: 280px;
 
     background-color: #FFFFFF;
 
@@ -480,12 +485,15 @@ footer p {
 
 .cart-items {
     flex: 2;
+    max-height: 650px;
+    overflow-y: auto;
+    padding-right: 10px;
 }
 
 .cart-item {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 25px;
 
     padding: 20px;
     margin-bottom: 20px;
@@ -507,18 +515,26 @@ footer p {
     flex-shrink: 0;
 
     background-color: #F5F3EE;
+    border-radius: 8px;
+}
 
-    color: #6B6B6B;
-
+.cart-item-image img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
     border-radius: 8px;
 }
 
 .cart-item-info {
     flex: 1;
+    min-width: 0;
 }
 
 .cart-item-info h3 {
     margin: 5px 0 10px;
+    font-size: 18px;
 }
 
 .cart-item-price {
@@ -529,9 +545,13 @@ footer p {
 }
 
 .cart-item-quantity {
+    width: 90px;
+
     display: flex;
     flex-direction: column;
     gap: 8px;
+
+    flex-shrink: 0;
 }
 
 .cart-item-quantity label {
@@ -541,25 +561,31 @@ footer p {
 
 .cart-item-quantity input {
     width: 65px;
-
     padding: 8px;
 
     border: 1px solid #E5E1D8;
     border-radius: 6px;
+
+    font-size: 14px;
 }
 
 .cart-item-total {
+    width: 120px;
+
     text-align: right;
+
+    flex-shrink: 0;
 }
 
 .cart-item-total p {
     margin: 0 0 10px;
 
     font-weight: bold;
+    font-size: 16px;
 }
 
 .cart-item-total button {
-    padding: 8px 12px;
+    padding: 7px 12px;
 
     background-color: transparent;
     color: #6B6B6B;
@@ -568,6 +594,10 @@ footer p {
     border-radius: 6px;
 
     cursor: pointer;
+}
+
+.cart-item-total button:hover {
+    background-color: #F5F3EE;
 }
 
 .cart-summary {

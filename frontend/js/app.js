@@ -252,6 +252,39 @@ if (accountPage) {
 
 }
 
+function addToCart(product) {
+
+    let cart = JSON.parse(localStorage.getItem("demartCart")) || [];
+
+    const existingItem = cart.find(function (item) {
+        return item.id === product.id;
+    });
+
+    if (existingItem) {
+
+        existingItem.quantity += 1;
+
+    } else {
+
+        cart.push({
+            id: product.id,
+            name: product.name,
+            category: product.category,
+            price: Number(product.price),
+            image_url: product.image_url,
+            quantity: 1
+        });
+
+    }
+
+    localStorage.setItem(
+        "demartCart",
+        JSON.stringify(cart)
+    );
+
+    console.log("Product added to cart:", product.name);
+}
+
 const productContainer = document.querySelector(".product-container");
 
 if (productContainer) {
@@ -301,16 +334,25 @@ if (productContainer) {
                                 View Details
                             </a>
 
-                            <button type="button">
-                                Add to Cart
-                            </button>
+                            <button type="button" class="add-to-cart-button">
+    Add to Cart
+</button>
 
                         </div>
 
                     </div>
                 `;
 
-                productContainer.appendChild(productCard);
+                const addToCartButton =
+    productCard.querySelector(".add-to-cart-button");
+
+addToCartButton.addEventListener("click", function () {
+
+    addToCart(product);
+
+});
+
+productContainer.appendChild(productCard);
 
             });
 
@@ -322,4 +364,213 @@ if (productContainer) {
     }
 
     loadProducts();
+}
+
+const productDetails = document.querySelector(".product-details");
+
+if (productDetails) {
+    async function loadProductDetails() {
+        try {
+            const params = new URLSearchParams(window.location.search);
+const productId = params.get("id");
+
+if (!productId) {
+    document.querySelector("#product-error").hidden = false;
+    productDetails.hidden = true;
+    return;
+}
+
+            const response = await fetch(
+                `http://localhost:3000/api/products/${productId}`
+            );
+
+            if (!response.ok) {
+    document.querySelector("#product-error").hidden = false;
+    productDetails.hidden = true;
+    return;
+}
+
+            const result = await response.json();
+            const product = result.product;
+
+            document.querySelector("#product-image").src =
+                product.image_url;
+
+            document.querySelector("#product-image").alt =
+                product.name;
+
+            document.querySelector("#product-category").textContent =
+                product.category;
+
+            document.querySelector("#product-name").textContent =
+                product.name;
+
+            document.querySelector("#product-rating").textContent =
+                `${product.rating} / 5`;
+
+            document.querySelector("#product-price").textContent =
+                `€${product.price}`;
+
+            document.querySelector("#product-description").textContent =
+                product.description;
+
+            document.querySelector("#product-information").textContent =
+                product.description;
+        } catch (error) {
+            console.error("Failed to load product details:", error);
+        }
+    }
+
+    loadProductDetails();
+}
+
+const cartItemsContainer = document.getElementById("cart-items");
+
+if (cartItemsContainer) {
+
+    function loadCart() {
+
+        const cart =
+            JSON.parse(localStorage.getItem("demartCart")) || [];
+
+            let subtotal = 0;
+
+cart.forEach(function (item) {
+    subtotal += item.price * item.quantity;
+});
+
+const shipping = subtotal >= 100 || subtotal === 0 ? 0 : 4.99;
+const total = subtotal + shipping;
+
+document.querySelector("#cart-subtotal").textContent =
+    `€${subtotal.toFixed(2)}`;
+
+document.querySelector("#cart-shipping").textContent =
+    shipping === 0 ? "Free" : `€${shipping.toFixed(2)}`;
+
+document.querySelector("#cart-total").textContent =
+    `€${total.toFixed(2)}`;
+
+        cartItemsContainer.innerHTML = "";
+
+if (cart.length === 0) {
+
+    cartItemsContainer.innerHTML = `
+        <div class="empty-cart">
+            <h3>Your cart is empty</h3>
+            <p>
+                You haven't added any products to your cart yet.
+            </p>
+            <a href="products.html">
+                Continue Shopping
+            </a>
+        </div>
+    `;
+
+    document.querySelector("#cart-subtotal").textContent = "€0.00";
+document.querySelector("#cart-shipping").textContent = "€0.00";
+document.querySelector("#cart-total").textContent = "€0.00";
+
+    return;
+}
+
+cart.forEach(function (item) {
+
+            const cartItem = document.createElement("article");
+
+            cartItem.className = "cart-item";
+
+            cartItem.innerHTML = `
+                <div class="cart-item-image">
+                    <img src="${item.image_url}" alt="${item.name}">
+                </div>
+
+                <div class="cart-item-info">
+
+                    <p class="product-category">
+                        ${item.category}
+                    </p>
+
+                    <h3>${item.name}</h3>
+
+                    <p class="cart-item-price">
+                        €${item.price.toFixed(2)}
+                    </p>
+
+                </div>
+
+                <div class="cart-item-quantity">
+
+                    <label for="quantity-${item.id}">
+                        Quantity
+                    </label>
+
+                    <input
+    id="quantity-${item.id}"
+    type="number"
+    value="${item.quantity}"
+    min="1"
+    class="cart-quantity-input"
+>
+
+                </div>
+
+                <div class="cart-item-total">
+
+                    <p>
+                        €${(item.price * item.quantity).toFixed(2)}
+                    </p>
+
+                    <button type="button" class="remove-cart-item">
+    Remove
+</button>
+
+                </div>
+            `;
+
+            cartItemsContainer.appendChild(cartItem);
+
+            const removeButton =
+    cartItem.querySelector(".remove-cart-item");
+
+removeButton.addEventListener("click", function () {
+
+    const updatedCart = cart.filter(function (cartItem) {
+        return cartItem.id !== item.id;
+    });
+
+    localStorage.setItem(
+        "demartCart",
+        JSON.stringify(updatedCart)
+    );
+
+    loadCart();
+});
+
+            const quantityInput =
+    cartItem.querySelector(".cart-quantity-input");
+
+quantityInput.addEventListener("change", function () {
+
+    const newQuantity = Number(quantityInput.value);
+
+    if (newQuantity < 1) {
+        quantityInput.value = item.quantity;
+        return;
+    }
+
+    item.quantity = newQuantity;
+
+    localStorage.setItem(
+        "demartCart",
+        JSON.stringify(cart)
+    );
+
+    loadCart();
+});
+
+        });
+    }
+
+    loadCart();
 }
