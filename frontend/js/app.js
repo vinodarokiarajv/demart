@@ -574,3 +574,93 @@ quantityInput.addEventListener("change", function () {
 
     loadCart();
 }
+
+const checkoutProductsContainer =
+    document.getElementById("checkout-products");
+
+if (checkoutProductsContainer) {
+
+    function loadCheckout() {
+
+        const cart =
+            JSON.parse(localStorage.getItem("demartCart")) || [];
+
+        checkoutProductsContainer.innerHTML = "";
+
+        let subtotal = 0;
+
+        if (cart.length === 0) {
+
+            checkoutProductsContainer.innerHTML = `
+                <div class="empty-cart">
+                    <h3>Your cart is empty</h3>
+                    <p>
+                        Add some products before proceeding to checkout.
+                    </p>
+                    <a href="products.html">
+                        Continue Shopping
+                    </a>
+                </div>
+            `;
+
+            document.querySelector("#checkout-subtotal").textContent =
+                "€0.00";
+
+            document.querySelector("#checkout-shipping").textContent =
+                "€0.00";
+
+            document.querySelector("#checkout-total").textContent =
+                "€0.00";
+
+            return;
+        }
+
+        cart.forEach(function (item) {
+
+            const itemTotal =
+                item.price * item.quantity;
+
+            subtotal += itemTotal;
+
+            const checkoutProduct =
+                document.createElement("div");
+
+            checkoutProduct.className =
+                "checkout-product";
+
+            checkoutProduct.innerHTML = `
+                <div>
+                    <strong>${item.name}</strong>
+                    <span>Qty: ${item.quantity}</span>
+                </div>
+
+                <span>
+                    €${itemTotal.toFixed(2)}
+                </span>
+            `;
+
+            checkoutProductsContainer.appendChild(
+                checkoutProduct
+            );
+        });
+
+        const shipping =
+            subtotal >= 100 ? 0 : 4.99;
+
+        const total =
+            subtotal + shipping;
+
+        document.querySelector("#checkout-subtotal").textContent =
+            `€${subtotal.toFixed(2)}`;
+
+        document.querySelector("#checkout-shipping").textContent =
+            shipping === 0
+                ? "Free"
+                : `€${shipping.toFixed(2)}`;
+
+        document.querySelector("#checkout-total").textContent =
+            `€${total.toFixed(2)}`;
+    }
+
+    loadCheckout();
+}

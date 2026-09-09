@@ -233,6 +233,9 @@ footer p {
     flex: 0 1 260px;
     max-width: 280px;
 
+    display: flex;
+    flex-direction: column;
+
     background-color: #FFFFFF;
 
     border: 1px solid #E5E1D8;
@@ -263,6 +266,10 @@ footer p {
 
 .product-info {
     padding: 20px;
+
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
 .product-category {
@@ -295,6 +302,7 @@ footer p {
 .product-actions {
     display: flex;
     gap: 10px;
+    margin-top: auto;
 }
 
 .product-actions a,
