@@ -22,8 +22,16 @@ async function getAllProducts(req, res) {
 }
 
 async function getProductById(req, res) {
+    const id = Number(req.params.id);
+
+    if (!Number.isSafeInteger(id) || id <= 0) {
+        return res.status(400).json({
+            message: "Product ID must be a positive integer"
+        });
+    }
+
     try {
-        const product = await productService.getProductById(req.params.id);
+        const product = await productService.getProductById(id);
 
         if (!product) {
             return res.status(404).json({
@@ -48,14 +56,26 @@ async function createProduct(req, res) {
     const description = req.body.description?.trim() || null;
     const price = req.body.price;
     const rating = req.body.rating ?? null;
-    const stockQuantity = req.body.stockQuantity ?? 0;
+    const stockQuantity = req.body.stockQuantity;
     const imageUrl = req.body.imageUrl?.trim() || null;
 
-    if (!name || !category || price === undefined) {
-        return res.status(400).json({
-            message: "Name, category and price are required"
-        });
-    }
+    if (!name) {
+    return res.status(400).json({
+        message: "Name is required"
+    });
+}
+
+if (!category) {
+    return res.status(400).json({
+        message: "Category is required"
+    });
+}
+
+if (price === undefined || price === null) {
+    return res.status(400).json({
+        message: "Price is required"
+    });
+}
 
     if (isNaN(price) || Number(price) < 0) {
         return res.status(400).json({
@@ -69,15 +89,29 @@ async function createProduct(req, res) {
         });
     }
 
-    if (
-        isNaN(stockQuantity) ||
-        !Number.isInteger(Number(stockQuantity)) ||
-        Number(stockQuantity) < 0
-    ) {
-        return res.status(400).json({
-            message: "Stock quantity must be a non-negative integer"
-        });
-    }
+    if (stockQuantity === undefined || stockQuantity === null) {
+  return res.status(400).json({
+    message: "Stock quantity is required"
+  });
+}
+
+if (typeof stockQuantity !== "number" || Number.isNaN(stockQuantity)) {
+  return res.status(400).json({
+    message: "Stock quantity must be a number"
+  });
+}
+
+if (!Number.isInteger(stockQuantity)) {
+  return res.status(400).json({
+    message: "Stock quantity must be an integer"
+  });
+}
+
+if (stockQuantity < 0) {
+  return res.status(400).json({
+    message: "Stock quantity must be non-negative"
+  });
+}
 
     try {
 
@@ -120,14 +154,26 @@ async function updateProduct(req, res) {
     const description = req.body.description?.trim() || null;
     const price = req.body.price;
     const rating = req.body.rating ?? null;
-    const stockQuantity = req.body.stockQuantity ?? 0;
+    const stockQuantity = req.body.stockQuantity;
     const imageUrl = req.body.imageUrl?.trim() || null;
 
-    if (!name || !category || price === undefined) {
-        return res.status(400).json({
-            message: "Name, category and price are required"
-        });
-    }
+    if (!name) {
+    return res.status(400).json({
+        message: "Name is required"
+    });
+}
+
+if (!category) {
+    return res.status(400).json({
+        message: "Category is required"
+    });
+}
+
+if (price === undefined || price === null) {
+    return res.status(400).json({
+        message: "Price is required"
+    });
+}
 
     if (isNaN(price) || Number(price) < 0) {
         return res.status(400).json({
@@ -144,15 +190,29 @@ async function updateProduct(req, res) {
         });
     }
 
-    if (
-        isNaN(stockQuantity) ||
-        !Number.isInteger(Number(stockQuantity)) ||
-        Number(stockQuantity) < 0
-    ) {
-        return res.status(400).json({
-            message: "Stock quantity must be a non-negative integer"
-        });
-    }
+    if (stockQuantity === undefined || stockQuantity === null) {
+  return res.status(400).json({
+    message: "Stock quantity is required"
+  });
+}
+
+if (typeof stockQuantity !== "number" || Number.isNaN(stockQuantity)) {
+  return res.status(400).json({
+    message: "Stock quantity must be a number"
+  });
+}
+
+if (!Number.isInteger(stockQuantity)) {
+  return res.status(400).json({
+    message: "Stock quantity must be an integer"
+  });
+}
+
+if (stockQuantity < 0) {
+  return res.status(400).json({
+    message: "Stock quantity must be non-negative"
+  });
+}
 
     try {
 

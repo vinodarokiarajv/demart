@@ -179,11 +179,31 @@ async function deleteProduct(id) {
     return result.rows[0];
 }
 
+async function decreaseStock(client, productId, quantity) {
+    const result = await client.query(
+        `
+        UPDATE products
+        SET stock_quantity = stock_quantity - $2
+        WHERE id = $1
+          AND is_active = true
+          AND stock_quantity >= $2
+        RETURNING
+            id,
+            name,
+            stock_quantity
+        `,
+        [productId, quantity]
+    );
+
+    return result.rows[0];
+}
+
 module.exports = {
     findAllProducts,
     findProductById,
     findProductByName,
     createProduct,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    decreaseStock
 };

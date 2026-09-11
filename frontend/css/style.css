@@ -223,9 +223,11 @@ footer p {
     text-align: center;
 }
 
-.product-container {
+.product-container,
+.featured-product-container {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 25px;
 }
 
@@ -257,10 +259,8 @@ footer p {
 }
 
 .product-image img {
-    max-width: 100%;
-    max-height: 100%;
-    width: auto;
-    height: auto;
+    width: 80%;
+    height: 80%;
     object-fit: contain;
 }
 
@@ -391,6 +391,14 @@ footer p {
     color: #6B6B6B;
 
     border-radius: 10px;
+}
+
+.product-details-image img {
+    max-width: 100%;
+    max-height: 450px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
 }
 
 .product-details-info {
@@ -1211,4 +1219,63 @@ footer p {
 
 .account-button:hover {
     background-color: #F3C370;
+}
+
+/* ========================================
+   Legal Pages
+   ======================================== */
+
+.legal-page {
+    max-width: 900px;
+    margin: 60px auto;
+    padding: 0 20px;
+}
+
+.legal-card {
+    background-color: #FFFFFF;
+    padding: 45px;
+    border: 1px solid #E5E1D8;
+    border-radius: 10px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+}
+
+.legal-card h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #171717;
+    font-size: 32px;
+}
+
+.legal-intro {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #555555;
+}
+
+.demo-notice {
+    margin: 25px 0;
+    padding: 18px 20px;
+    background-color: #FAF9F6;
+    border-left: 4px solid #C9A227;
+    line-height: 1.7;
+}
+
+.legal-card h3 {
+    margin-top: 32px;
+    margin-bottom: 10px;
+    color: #171717;
+}
+
+.legal-card p {
+    line-height: 1.7;
+    color: #444444;
+}
+
+.legal-actions {
+    margin-top: 40px;
+}
+
+.legal-actions .auth-button {
+    display: inline-block;
+    text-decoration: none;
 }
