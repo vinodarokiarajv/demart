@@ -27,90 +27,151 @@ window.addEventListener("pageshow", function () {
 const registerForm = document.getElementById("register-form");
 
 if (registerForm) {
-
     registerForm.addEventListener("submit", async function (event) {
-
         event.preventDefault();
-        const messageElement = document.getElementById("register-message");
 
-        const nameInput = document.getElementById("register-name");
-        const emailInput = document.getElementById("register-email");
-        const passwordInput = document.getElementById("register-password");
-        const confirmPasswordInput = document.getElementById("confirm-password");
+        const messageElement =
+            document.getElementById("register-message");
 
-        const name = nameInput.value;
-        const email = emailInput.value;
+        const firstNameInput =
+            document.getElementById("register-first-name");
+
+        const lastNameInput =
+            document.getElementById("register-last-name");
+
+        const emailInput =
+            document.getElementById("register-email");
+
+        const passwordInput =
+            document.getElementById("register-password");
+
+        const confirmPasswordInput =
+            document.getElementById("confirm-password");
+
+        const streetInput =
+            document.getElementById("register-street");
+
+        const postalCodeInput =
+            document.getElementById("register-postal-code");
+
+        const cityInput =
+            document.getElementById("register-city");
+
+        const countryInput =
+            document.getElementById("register-country");
+
+        const firstName = firstNameInput.value.trim();
+        const lastName = lastNameInput.value.trim();
+        const email = emailInput.value.trim();
         const password = passwordInput.value;
         const confirmPassword = confirmPasswordInput.value;
+        const street = streetInput.value.trim();
+        const postalCode = postalCodeInput.value.trim();
+        const city = cityInput.value.trim();
+        const country = countryInput.value.trim();
 
-        if (name.trim() === "") {
-    messageElement.textContent = "Name is required";
-    return;
-}
-
-if (email.trim() === "") {
-    messageElement.textContent = "Email is required";
-    return;
-}
-
-if (password.trim() === "") {
-    messageElement.textContent = "Password is required";
-    return;
-}
-
-if (confirmPassword.trim() === "") {
-    messageElement.textContent = "Please confirm your password";
-    return;
-}
-
-if (password !== confirmPassword) {
-    messageElement.textContent = "Passwords do not match";
-    return;
-} else {
-
-            try {
-
-                const response = await fetch(
-                    "http://localhost:3000/api/auth/register",
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-
-                        body: JSON.stringify({
-                            name: name,
-                            email: email,
-                            password: password
-                        })
-                    }
-                );
-
-                const result = await response.json();
-
-                if (response.ok) {
-    messageElement.textContent = result.message;
-
-    registerForm.reset();
-
-    setTimeout(function () {
-        window.location.href = "login.html";
-    }, 1200);
-} else {
-    messageElement.textContent = result.message;
-}
-
-            } catch (error) {
-
-                console.error("Registration request failed:", error);
-
-            }
-
+        if (!firstName) {
+            messageElement.textContent = "First name is required";
+            return;
         }
 
-    });
+        if (!lastName) {
+            messageElement.textContent = "Last name is required";
+            return;
+        }
 
+        if (!email) {
+            messageElement.textContent = "Email is required";
+            return;
+        }
+
+        if (!password) {
+            messageElement.textContent = "Password is required";
+            return;
+        }
+
+        if (!confirmPassword) {
+            messageElement.textContent =
+                "Please confirm your password";
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            messageElement.textContent =
+                "Passwords do not match";
+            return;
+        }
+
+        if (!street) {
+            messageElement.textContent =
+                "Street address is required";
+            return;
+        }
+
+        if (!postalCode) {
+            messageElement.textContent =
+                "Postal code is required";
+            return;
+        }
+
+        if (!city) {
+            messageElement.textContent =
+                "City is required";
+            return;
+        }
+
+        if (!country) {
+            messageElement.textContent =
+                "Country is required";
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                "http://localhost:3000/api/auth/register",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        firstName: firstName,
+                        lastName: lastName,
+                        email: email,
+                        password: password,
+                        street: street,
+                        postalCode: postalCode,
+                        city: city,
+                        country: country
+                    })
+                }
+            );
+
+            const result = await response.json();
+
+            if (response.ok) {
+                messageElement.textContent =
+                    result.message;
+
+                registerForm.reset();
+
+                setTimeout(function () {
+                    window.location.href = "login.html";
+                }, 1200);
+            } else {
+                messageElement.textContent =
+                    result.message;
+            }
+        } catch (error) {
+            console.error(
+                "Registration request failed:",
+                error
+            );
+
+            messageElement.textContent =
+                "Unable to connect to the server";
+        }
+    });
 }
 
 const loginForm = document.getElementById("login-form");
@@ -231,13 +292,14 @@ if (logoutLink) {
 
     logoutLink.addEventListener("click", function (event) {
 
-        event.preventDefault();
+    event.preventDefault();
 
-        localStorage.removeItem("demartUser");
+    localStorage.removeItem("demartUser");
+    localStorage.removeItem("demartCart");
 
-        window.location.href = "../index.html";
+    window.location.href = "../index.html";
 
-    });
+});
 
 }
 
@@ -724,6 +786,83 @@ quantityInput.addEventListener("change", function () {
     loadCart();
 }
 
+/* ========================================
+   Checkout User Information
+   ======================================== */
+
+const checkoutPage =
+    document.querySelector(".checkout-page");
+
+if (checkoutPage) {
+
+    const checkoutUser = JSON.parse(
+        localStorage.getItem("demartUser")
+    );
+
+    if (!checkoutUser || !checkoutUser.token) {
+
+        window.location.href = "login.html";
+
+    } else {
+
+        const emailField =
+            document.getElementById("email");
+
+        const firstNameField =
+            document.getElementById("first-name");
+
+        const lastNameField =
+            document.getElementById("last-name");
+
+        const streetField =
+            document.getElementById("street");
+
+        const postalCodeField =
+            document.getElementById("postal-code");
+
+        const cityField =
+            document.getElementById("city");
+
+        const countryField =
+            document.getElementById("country");
+
+        if (emailField && checkoutUser.email) {
+            emailField.value =
+                checkoutUser.email;
+        }
+
+        if (firstNameField && checkoutUser.first_name) {
+            firstNameField.value =
+                checkoutUser.first_name;
+        }
+
+        if (lastNameField && checkoutUser.last_name) {
+            lastNameField.value =
+                checkoutUser.last_name;
+        }
+
+        if (streetField && checkoutUser.street) {
+            streetField.value =
+                checkoutUser.street;
+        }
+
+        if (postalCodeField && checkoutUser.postal_code) {
+            postalCodeField.value =
+                checkoutUser.postal_code;
+        }
+
+        if (cityField && checkoutUser.city) {
+            cityField.value =
+                checkoutUser.city;
+        }
+
+        if (countryField && checkoutUser.country) {
+            countryField.value =
+                checkoutUser.country;
+        }
+    }
+}
+
 const checkoutProductsContainer =
     document.getElementById("checkout-products");
 
@@ -886,4 +1025,170 @@ if (placeOrderButton) {
             placeOrderButton.textContent = "Place Order";
         }
     });
+}
+
+/* ========================================
+   Order Confirmation
+   ======================================== */
+
+const orderDetailsContainer =
+    document.getElementById("order-details");
+
+if (orderDetailsContainer) {
+
+    async function loadOrderConfirmation() {
+
+        const user =
+            JSON.parse(localStorage.getItem("demartUser"));
+
+        if (!user || !user.token) {
+
+            window.location.href = "login.html";
+
+            return;
+        }
+
+        const urlParams =
+            new URLSearchParams(window.location.search);
+
+        const orderId =
+            urlParams.get("orderId");
+
+        if (!orderId) {
+
+            orderDetailsContainer.innerHTML = `
+                <div class="empty-cart">
+                    <h3>Order not found</h3>
+                    <p>No order ID was provided.</p>
+                </div>
+            `;
+
+            return;
+        }
+
+        try {
+
+            const response = await fetch(
+                `http://localhost:3000/api/orders/${orderId}`,
+                {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${user.token}`
+                    }
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok) {
+
+                throw new Error(
+                    result.message || "Failed to load order"
+                );
+            }
+
+            const order = result.order;
+            const items = result.items || [];
+
+            const orderDate =
+                new Date(order.created_at);
+
+            const formattedDate =
+                orderDate.toLocaleString();
+
+            let itemsHtml = "";
+
+            items.forEach(function (item) {
+
+                const itemTotal =
+                    Number(item.unit_price) *
+                    Number(item.quantity);
+
+                itemsHtml += `
+                    <div class="checkout-product">
+
+                        <div>
+
+                            <strong>
+                                ${item.product_name}
+                            </strong>
+
+                            <span>
+                                Qty: ${item.quantity}
+                            </span>
+
+                        </div>
+
+                        <span>
+                            €${itemTotal.toFixed(2)}
+                        </span>
+
+                    </div>
+                `;
+            });
+
+            orderDetailsContainer.innerHTML = `
+
+                <div class="order-summary">
+
+                    <h2>
+                        Order #${order.id}
+                    </h2>
+
+                    <p>
+                        <strong>Status:</strong>
+                        ${order.status}
+                    </p>
+
+                    <p>
+                        <strong>Order Date:</strong>
+                        ${formattedDate}
+                    </p>
+
+                </div>
+
+
+                <div class="order-items">
+
+                    <h2>Items</h2>
+
+                    ${itemsHtml}
+
+                </div>
+
+
+                <div class="order-total">
+
+                    <h2>
+                        Total:
+                        €${Number(order.total_amount).toFixed(2)}
+                    </h2>
+
+                </div>
+            `;
+
+        } catch (error) {
+
+            console.error(
+                "Failed to load order:",
+                error
+            );
+
+            orderDetailsContainer.innerHTML = `
+                <div class="empty-cart">
+
+                    <h3>
+                        Unable to load order
+                    </h3>
+
+                    <p>
+                        ${error.message}
+                    </p>
+
+                </div>
+            `;
+        }
+    }
+
+    loadOrderConfirmation();
 }

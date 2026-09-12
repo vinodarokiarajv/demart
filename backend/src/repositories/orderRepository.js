@@ -95,10 +95,73 @@ async function findOrderItemsByOrderId(orderId) {
     return result.rows;
 }
 
+async function findAllOrders() {
+    const result = await pool.query(
+        `
+        SELECT
+            o.id,
+            o.user_id,
+            u.name AS customer_name,
+            u.email AS customer_email,
+            o.status,
+            o.total_amount,
+            o.created_at
+        FROM orders o
+        INNER JOIN users u
+            ON u.id = o.user_id
+        ORDER BY o.created_at DESC
+        `
+    );
+
+    return result.rows;
+}
+
+async function updateOrderStatus(orderId, status) {
+
+    const result = await pool.query(
+        `
+        UPDATE orders
+        SET status = $1
+        WHERE id = $2
+        RETURNING
+            id,
+            user_id,
+            status,
+            total_amount,
+            created_at
+        `,
+        [status, orderId]
+    );
+
+    return result.rows[0];
+}
+
+async function findOrderById(orderId) {
+
+    const result = await pool.query(
+        `
+        SELECT
+            id,
+            user_id,
+            status,
+            total_amount,
+            created_at
+        FROM orders
+        WHERE id = $1
+        `,
+        [orderId]
+    );
+
+    return result.rows[0];
+}
+
 module.exports = {
     createOrder,
     createOrderItem,
     findOrdersByUserId,
     findOrderByIdAndUserId,
-    findOrderItemsByOrderId
+    findOrderItemsByOrderId,
+    findAllOrders,
+    updateOrderStatus,
+    findOrderById
 };

@@ -54,102 +54,121 @@
 
                 <form id="register-form" class="auth-form">
 
-                    <div class="form-group">
+    <div class="form-group">
+        <label for="register-first-name">
+            First Name
+        </label>
+        <input
+            id="register-first-name"
+            type="text"
+            placeholder="Enter your first name"
+            required
+        >
+    </div>
 
-                        <label for="register-name">
-                            Full Name
-                        </label>
+    <div class="form-group">
+        <label for="register-last-name">
+            Last Name
+        </label>
+        <input
+            id="register-last-name"
+            type="text"
+            placeholder="Enter your last name"
+            required
+        >
+    </div>
 
-                        <input
-                            id="register-name"
-                            type="text"
-                            placeholder="Enter your full name"
-                            required
-                        >
+    <div class="form-group">
+        <label for="register-email">
+            Email Address
+        </label>
+        <input
+            id="register-email"
+            type="email"
+            placeholder="you@example.com"
+            required
+        >
+    </div>
 
-                    </div>
+    <div class="form-group">
+        <label for="register-password">
+            Password
+        </label>
+        <input
+            id="register-password"
+            type="password"
+            placeholder="Enter your password"
+            required
+        >
+    </div>
 
+    <div class="form-group">
+        <label for="confirm-password">
+            Confirm Password
+        </label>
+        <input
+            id="confirm-password"
+            type="password"
+            placeholder="Confirm your password"
+            required
+        >
+    </div>
 
-                    <div class="form-group">
+    <div class="form-group">
+        <label for="register-street">
+            Street Address
+        </label>
+        <input
+            id="register-street"
+            type="text"
+            placeholder="Enter your street address"
+            required
+        >
+    </div>
 
-                        <label for="register-email">
-                            Email Address
-                        </label>
+    <div class="form-group">
+        <label for="register-postal-code">
+            Postal Code
+        </label>
+        <input
+            id="register-postal-code"
+            type="text"
+            placeholder="Enter your postal code"
+            required
+        >
+    </div>
 
-                        <input
-                            id="register-email"
-                            type="email"
-                            placeholder="you@example.com"
-                            required
-                        >
+    <div class="form-group">
+        <label for="register-city">
+            City
+        </label>
+        <input
+            id="register-city"
+            type="text"
+            placeholder="Enter your city"
+            required
+        >
+    </div>
 
-                    </div>
+    <div class="form-group">
+        <label for="register-country">
+            Country
+        </label>
+        <input
+            id="register-country"
+            type="text"
+            placeholder="Enter your country"
+            required
+        >
+    </div>
 
+    <button type="submit" class="auth-button">
+        Register
+    </button>
 
-                    <div class="form-group">
+    <p id="register-message" class="form-message"></p>
 
-                        <label for="register-password">
-                            Password
-                        </label>
-
-                        <input
-                            id="register-password"
-                            type="password"
-                            placeholder="Create a password"
-                            required
-                        >
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label for="confirm-password">
-                            Confirm Password
-                        </label>
-
-                        <input
-                            id="confirm-password"
-                            type="password"
-                            placeholder="Confirm your password"
-                            required
-                        >
-
-                    </div>
-
-
-                    <div class="terms-option">
-
-                        <label>
-
-                            <input
-                                type="checkbox"
-                                id="terms"
-                                required
-                            >
-
-                            <span>
-                                I agree to the
-                                <a href="terms.html">
-                                    Terms &amp; Conditions
-                                </a>
-                            </span>
-
-                        </label>
-
-                    </div>
-
-
-                    <button
-                        type="submit"
-                        class="auth-button"
-                    >
-                        Create Account
-                    </button>
-
-                </form>
-
-                <p id="register-message"></p>
+</form>
 
                 <div class="auth-divider">
                     <span>OR</span>

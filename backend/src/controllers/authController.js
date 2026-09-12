@@ -1,96 +1,94 @@
 const authService = require("../services/authService");
 
 async function register(req, res) {
-
-    const name = req.body.name?.trim();
+    const firstName = req.body.firstName?.trim();
+    const lastName = req.body.lastName?.trim();
     const email = req.body.email?.trim();
     const password = req.body.password;
+    const street = req.body.street?.trim();
+    const postalCode = req.body.postalCode?.trim();
+    const city = req.body.city?.trim();
+    const country = req.body.country?.trim();
 
-    if (!name || !email || !password) {
-
+    if (
+        !firstName ||
+        !lastName ||
+        !email ||
+        !password ||
+        !street ||
+        !postalCode ||
+        !city ||
+        !country
+    ) {
         return res.status(400).json({
-            message: "Name, email and password are required"
+            message: "All registration fields are required"
         });
-
     }
 
     if (!email.includes("@")) {
-
         return res.status(400).json({
-            message: "Please provide a valid email address"
+            message: "Please enter a valid email address"
         });
-
     }
 
     if (password.length < 8) {
-
         return res.status(400).json({
             message: "Password must be at least 8 characters"
         });
-
     }
 
     if (!/[A-Z]/.test(password)) {
-
         return res.status(400).json({
             message: "Password must contain at least one uppercase letter"
         });
-
     }
 
     if (!/[a-z]/.test(password)) {
-
         return res.status(400).json({
             message: "Password must contain at least one lowercase letter"
         });
-
     }
 
     if (!/[0-9]/.test(password)) {
-
         return res.status(400).json({
             message: "Password must contain at least one number"
         });
-
     }
 
     if (!/[^A-Za-z0-9]/.test(password)) {
-
         return res.status(400).json({
             message: "Password must contain at least one special character"
         });
-
     }
 
     try {
-
         const user = await authService.registerUser(
-            name,
+            firstName,
+            lastName,
             email,
-            password
+            password,
+            street,
+            postalCode,
+            city,
+            country
         );
 
         res.status(201).json({
             message: "User registered successfully",
             user: user
         });
-
     } catch (error) {
-
-        console.error(error);
+        console.error("Registration error:", error);
 
         if (error.code === "23505") {
-
             return res.status(409).json({
                 message: "Email address is already registered"
             });
-
         }
 
         res.status(500).json({
             message: "Registration failed"
         });
-
     }
 }
 

@@ -153,8 +153,76 @@ async function getOrderById(orderId, userId) {
     };
 }
 
+async function updateOrderStatus(orderId, newStatus) {
+
+    if (!orderId) {
+        throw new Error("Order ID is required");
+    }
+
+    if (!newStatus) {
+        throw new Error("Order status is required");
+    }
+
+    const allowedStatuses = [
+        "PENDING",
+        "CONFIRMED",
+        "PROCESSING",
+        "SHIPPED",
+        "DELIVERED",
+        "CANCELLED"
+    ];
+
+    if (!allowedStatuses.includes(newStatus)) {
+        throw new Error("Invalid order status");
+    }
+
+    const order = await orderRepository.findOrderById(orderId);
+
+    if (!order) {
+        throw new Error("Order not found");
+    }
+
+    const allowedTransitions = {
+        PENDING: [
+            "CONFIRMED",
+            "CANCELLED"
+        ],
+
+        CONFIRMED: [
+            "PROCESSING",
+            "CANCELLED"
+        ],
+
+        PROCESSING: [
+            "SHIPPED"
+        ],
+
+        SHIPPED: [
+            "DELIVERED"
+        ],
+
+        DELIVERED: [],
+
+        CANCELLED: []
+    };
+
+    const currentStatus = order.status;
+
+    if (!allowedTransitions[currentStatus].includes(newStatus)) {
+        throw new Error(
+            `Invalid status transition: ${currentStatus} -> ${newStatus}`
+        );
+    }
+
+    return await orderRepository.updateOrderStatus(
+        orderId,
+        newStatus
+    );
+}
+
 module.exports = {
     createOrder,
     getOrdersByUserId,
-    getOrderById
+    getOrderById,
+    updateOrderStatus
 };
