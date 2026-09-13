@@ -133,6 +133,7 @@ async function getUserById(userId) {
     postal_code,
     city,
     country,
+    role,
     created_at
 FROM users
 WHERE id = $1
@@ -147,8 +148,149 @@ WHERE id = $1
     return result.rows[0];
 }
 
+async function updateUser(
+    userId,
+    firstName,
+    lastName,
+    email,
+    street,
+    postalCode,
+    city,
+    country
+) {
+    const result = await pool.query(
+        `
+        UPDATE users
+        SET
+            name = $2,
+            first_name = $3,
+            last_name = $4,
+            email = $5,
+            street = $6,
+            postal_code = $7,
+            city = $8,
+            country = $9
+        WHERE id = $1
+        RETURNING
+            id,
+            name,
+            first_name,
+            last_name,
+            email,
+            street,
+            postal_code,
+            city,
+            country,
+            role,
+            created_at
+        `,
+        [
+            userId,
+            `${firstName} ${lastName}`,
+            firstName,
+            lastName,
+            email,
+            street,
+            postalCode,
+            city,
+            country
+        ]
+    );
+
+    if (result.rows.length === 0) {
+        return null;
+    }
+
+    const user = result.rows[0];
+
+    const token = jwt.sign(
+        {
+            id: user.id,
+            email: user.email,
+            role: user.role
+        },
+        process.env.JWT_SECRET,
+        {
+            expiresIn: "1h"
+        }
+    );
+
+    return {
+        ...user,
+        token: token
+    };
+}
+
+async function updateUserRole(userId, newRole) {
+    const result = await pool.query(
+        `
+        UPDATE users
+        SET role = $1
+        WHERE id = $2
+        RETURNING
+            id,
+            name,
+            first_name,
+            last_name,
+            email,
+            street,
+            postal_code,
+            city,
+            country,
+            role,
+            created_at
+        `,
+        [newRole, userId]
+    );
+
+    if (result.rows.length === 0) {
+        return null;
+    }
+
+    return result.rows[0];
+}
+
+async function getAdminCount() {
+    const result = await pool.query(
+        `
+        SELECT COUNT(*)::int AS count
+        FROM users
+        WHERE role = 'ADMIN'
+        `
+    );
+
+    return result.rows[0].count;
+}
+
+async function getAllUsers() {
+    const result = await pool.query(
+        `
+        SELECT
+            id,
+            name,
+            first_name,
+            last_name,
+            email,
+            street,
+            postal_code,
+            city,
+            country,
+            role,
+            created_at
+        FROM users
+        ORDER BY id
+        `
+    );
+
+    return result.rows;
+}
+
 module.exports = {
     registerUser,
     loginUser,
-    getUserById
+    getUserById,
+    updateUser,
+    updateUserRole,
+    getAdminCount,
+    getAllUsers
 };

@@ -257,8 +257,24 @@ const loginLink = document.getElementById("login-link");
 const registerLink = document.getElementById("register-link");
 const accountLink = document.getElementById("account-link");
 const logoutLink = document.getElementById("logout-link");
+const adminUsersLink = document.getElementById("admin-users-link");
+const ordersLink = document.getElementById("orders-link");
 
 if (storedUser) {
+
+    const currentUser = JSON.parse(storedUser);
+
+    if (adminUsersLink) {
+        if (currentUser.role === "ADMIN") {
+            adminUsersLink.style.display = "inline";
+        } else {
+            adminUsersLink.style.display = "none";
+        }
+    }
+
+    if (ordersLink) {
+        ordersLink.style.display = "inline";
+    }
 
     if (loginLink) {
         loginLink.style.display = "none";
@@ -278,6 +294,22 @@ if (storedUser) {
 
 } else {
 
+    if (adminUsersLink) {
+        adminUsersLink.style.display = "none";
+    }
+
+    if (ordersLink) {
+        ordersLink.style.display = "none";
+    }
+
+    if (loginLink) {
+        loginLink.style.display = "inline";
+    }
+
+    if (registerLink) {
+        registerLink.style.display = "inline";
+    }
+
     if (accountLink) {
         accountLink.style.display = "none";
     }
@@ -285,21 +317,20 @@ if (storedUser) {
     if (logoutLink) {
         logoutLink.style.display = "none";
     }
-
 }
 
 if (logoutLink) {
 
     logoutLink.addEventListener("click", function (event) {
 
-    event.preventDefault();
+        event.preventDefault();
 
-    localStorage.removeItem("demartUser");
-    localStorage.removeItem("demartCart");
+        localStorage.removeItem("demartUser");
+        localStorage.removeItem("demartCart");
 
-    window.location.href = "../index.html";
+        window.location.href = "../index.html";
 
-});
+    });
 
 }
 
@@ -1057,9 +1088,12 @@ if (orderDetailsContainer) {
         if (!orderId) {
 
             orderDetailsContainer.innerHTML = `
-                <div class="empty-cart">
-                    <h3>Order not found</h3>
+                <div class="order-error">
+                    <h3>Order Not Found</h3>
                     <p>No order ID was provided.</p>
+                    <a href="orders.html" class="account-button">
+                        Back to My Orders
+                    </a>
                 </div>
             `;
 
@@ -1073,7 +1107,8 @@ if (orderDetailsContainer) {
                 {
                     method: "GET",
                     headers: {
-                        "Authorization": `Bearer ${user.token}`
+                        "Authorization":
+                            `Bearer ${user.token}`
                     }
                 }
             );
@@ -1083,7 +1118,8 @@ if (orderDetailsContainer) {
             if (!response.ok) {
 
                 throw new Error(
-                    result.message || "Failed to load order"
+                    result.message ||
+                    "Failed to load order"
                 );
             }
 
@@ -1096,6 +1132,9 @@ if (orderDetailsContainer) {
             const formattedDate =
                 orderDate.toLocaleString();
 
+            const statusClass =
+                order.status.toLowerCase();
+
             let itemsHtml = "";
 
             items.forEach(function (item) {
@@ -1105,23 +1144,34 @@ if (orderDetailsContainer) {
                     Number(item.quantity);
 
                 itemsHtml += `
-                    <div class="checkout-product">
+                    <div class="order-item">
 
-                        <div>
+                        <div class="order-item-image">
+                            <img
+                                src="${item.image_url}"
+                                alt="${item.product_name}">
+                        </div>
 
-                            <strong>
+                        <div class="order-item-info">
+
+                            <h3>
                                 ${item.product_name}
-                            </strong>
+                            </h3>
 
-                            <span>
-                                Qty: ${item.quantity}
-                            </span>
+                            <p>
+                                Quantity: ${item.quantity}
+                            </p>
+
+                            <p>
+                                Unit Price:
+                                €${Number(item.unit_price).toFixed(2)}
+                            </p>
 
                         </div>
 
-                        <span>
+                        <div class="order-item-total">
                             €${itemTotal.toFixed(2)}
-                        </span>
+                        </div>
 
                     </div>
                 `;
@@ -1131,38 +1181,74 @@ if (orderDetailsContainer) {
 
                 <div class="order-summary">
 
-                    <h2>
-                        Order #${order.id}
-                    </h2>
+                    <div class="order-summary-item">
 
-                    <p>
-                        <strong>Status:</strong>
-                        ${order.status}
-                    </p>
+                        <strong>Order Number</strong>
 
-                    <p>
-                        <strong>Order Date:</strong>
-                        ${formattedDate}
-                    </p>
+                        <span>
+                            #${order.id}
+                        </span>
+
+                    </div>
+
+                    <div class="order-summary-item">
+
+                        <strong>Status</strong>
+
+                        <span>
+                            <span class="
+                                order-status
+                                order-status-${statusClass}
+                            ">
+                                ${order.status}
+                            </span>
+                        </span>
+
+                    </div>
+
+                    <div class="order-summary-item">
+
+                        <strong>Order Date</strong>
+
+                        <span>
+                            ${formattedDate}
+                        </span>
+
+                    </div>
 
                 </div>
 
-
                 <div class="order-items">
 
-                    <h2>Items</h2>
+                    <h2>Order Items</h2>
 
                     ${itemsHtml}
 
                 </div>
 
+                <div class="order-confirmation-total">
 
-                <div class="order-total">
+                    <span>Total</span>
 
-                    <h2>
-                        Total:
+                    <span>
                         €${Number(order.total_amount).toFixed(2)}
-                    </h2>
+                    </span>
+
+                </div>
+
+                <div class="order-confirmation-actions">
+
+                    <a
+                        href="orders.html"
+                        class="account-button">
+                        View My Orders
+                    </a>
+
+                    <a
+                        href="products.html"
+                        class="account-button">
+                        Continue Shopping
+                    </a>
 
                 </div>
             `;
@@ -1175,15 +1261,21 @@ if (orderDetailsContainer) {
             );
 
             orderDetailsContainer.innerHTML = `
-                <div class="empty-cart">
+                <div class="order-error">
 
                     <h3>
-                        Unable to load order
+                        Unable to Load Order
                     </h3>
 
                     <p>
                         ${error.message}
                     </p>
+
+                    <a
+                        href="orders.html"
+                        class="account-button">
+                        Back to My Orders
+                    </a>
 
                 </div>
             `;
@@ -1192,3 +1284,199 @@ if (orderDetailsContainer) {
 
     loadOrderConfirmation();
 }
+
+/* ========================================
+   Customer Orders
+   ======================================== */
+
+const ordersContainer =
+    document.getElementById("orders-container");
+
+if (ordersContainer) {
+
+    async function loadCustomerOrders() {
+
+        const user =
+            JSON.parse(localStorage.getItem("demartUser"));
+
+        if (!user || !user.token) {
+
+            window.location.href = "login.html";
+
+            return;
+        }
+
+        try {
+
+            const response = await fetch(
+                "http://localhost:3000/api/orders",
+                {
+                    method: "GET",
+                    headers: {
+                        "Authorization":
+                            `Bearer ${user.token}`
+                    }
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok) {
+
+                throw new Error(
+                    result.message ||
+                    "Failed to load orders"
+                );
+            }
+
+            const orders = result.orders || [];
+
+            if (orders.length === 0) {
+
+                ordersContainer.innerHTML = `
+                    <div class="orders-empty">
+
+                        <h2>No Orders Yet</h2>
+
+                        <p>
+                            You have not placed any orders yet.
+                        </p>
+
+                        <a href="products.html"
+                           class="account-button">
+                            Start Shopping
+                        </a>
+
+                    </div>
+                `;
+
+                return;
+            }
+
+            let ordersHtml = "";
+
+            orders.forEach(function (order) {
+
+                const orderDate =
+                    new Date(order.created_at);
+
+                const formattedDate =
+                    orderDate.toLocaleString();
+
+                const total =
+                    Number(order.total_amount).toFixed(2);
+
+                ordersHtml += `
+                    <article class="order-card">
+
+                        <div class="order-card-header">
+
+                            <div>
+                                <h2>
+                                    Order #${order.id}
+                                </h2>
+
+                                <p>
+                                    ${formattedDate}
+                                </p>
+                            </div>
+
+                            <span class="
+                                order-status
+                                order-status-${order.status.toLowerCase()}
+                            ">
+                                ${order.status}
+                            </span>
+
+                        </div>
+
+                        <div class="order-card-details">
+
+                            <div>
+                                <strong>Total</strong>
+                                <span>
+                                    €${total}
+                                </span>
+                            </div>
+
+                            <div>
+                                <strong>Status</strong>
+                                <span>
+                                    ${order.status}
+                                </span>
+                            </div>
+
+                        </div>
+
+                        <div class="order-card-actions">
+
+                            <a
+                                href="order-confirmation.html?orderId=${order.id}"
+                                class="account-button">
+                                View Details
+                            </a>
+
+                        </div>
+
+                    </article>
+                `;
+            });
+
+            ordersContainer.innerHTML = ordersHtml;
+
+        } catch (error) {
+
+            console.error(
+                "Failed to load customer orders:",
+                error
+            );
+
+            ordersContainer.innerHTML = `
+                <div class="orders-empty">
+
+                    <h2>Unable to Load Orders</h2>
+
+                    <p>
+                        ${error.message}
+                    </p>
+
+                    <button
+                        type="button"
+                        class="account-button"
+                        onclick="location.reload()">
+                        Try Again
+                    </button>
+
+                </div>
+            `;
+        }
+    }
+
+    loadCustomerOrders();
+}
+
+/* ========================================
+   Active Navigation Item
+   ======================================== */
+
+const currentPath = window.location.pathname;
+
+const navLinks = document.querySelectorAll(".main-nav a");
+
+navLinks.forEach(function (link) {
+
+    // Ignore action links such as Logout.
+    if (link.getAttribute("href") === "#") {
+        return;
+    }
+
+    const linkPath = new URL(
+        link.href,
+        window.location.origin
+    ).pathname;
+
+    if (linkPath === currentPath) {
+        link.classList.add("active");
+    }
+
+});

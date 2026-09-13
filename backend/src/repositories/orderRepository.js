@@ -73,6 +73,7 @@ async function findOrderByIdAndUserId(orderId, userId) {
 }
 
 async function findOrderItemsByOrderId(orderId) {
+
     const result = await pool.query(
         `
         SELECT

@@ -16,16 +16,23 @@ async function createOrder(userId, items) {
 for (const item of items) {
     const { productId, quantity } = item;
 
-    if (!productId || !Number.isInteger(quantity) || quantity <= 0) {
-        throw new Error("Invalid product or quantity");
-    }
+if (
+    !Number.isInteger(Number(productId)) ||
+    Number(productId) <= 0 ||
+    !Number.isInteger(quantity) ||
+    quantity <= 0
+) {
+    throw new Error("Invalid product or quantity");
+}
 
-    const existingQuantity = mergedItems.get(productId) || 0;
+const normalizedProductId = Number(productId);
 
-    mergedItems.set(
-        productId,
-        existingQuantity + quantity
-    );
+const existingQuantity = mergedItems.get(normalizedProductId) || 0;
+
+mergedItems.set(
+    normalizedProductId,
+    existingQuantity + quantity
+);
 }
 
 const normalizedItems = Array.from(
@@ -47,11 +54,16 @@ const normalizedItems = Array.from(
         for (const item of normalizedItems) {
             const { productId, quantity } = item;
 
-            if (!productId || !Number.isInteger(quantity) || quantity <= 0) {
-                throw new Error("Invalid product or quantity");
-            }
+if (
+    !Number.isInteger(productId) ||
+    productId <= 0 ||
+    !Number.isInteger(quantity) ||
+    quantity <= 0
+) {
+    throw new Error("Invalid product or quantity");
+}
 
-            const product = await productRepository.findProductById(productId);
+const product = await productRepository.findProductById(productId);
 
             if (!product) {
                 throw new Error(`Product ${productId} not found or inactive`);

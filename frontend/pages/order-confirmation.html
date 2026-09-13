@@ -29,44 +29,29 @@
             Account
         </a>
 
-        <a href="#" id="logout-link">Logout</a>
-
         <a href="cart.html">Cart</a>
+
+        <a href="#" id="logout-link">Logout</a>
 
     </nav>
 
 </header>
 
 
-    <main class="container">
+    <main class="order-confirmation-container">
 
-        <section class="order-confirmation">
+    <div class="order-confirmation-header">
+        <h1>Order Confirmation</h1>
+        <p>Thank you for your order.</p>
+    </div>
 
-            <h1>Order Confirmed</h1>
+    <section class="order-confirmation-card">
+        <div id="order-details">
+            <p class="order-loading">Loading order details...</p>
+        </div>
+    </section>
 
-            <p>Thank you for your order!</p>
-
-            <div id="order-details">
-
-                <p>Loading order details...</p>
-
-            </div>
-
-            <div class="order-actions">
-
-                <a href="products.html" class="btn">
-                    Continue Shopping
-                </a>
-
-                <a href="account.html" class="btn">
-                    View Account
-                </a>
-
-            </div>
-
-        </section>
-
-    </main>
+</main>
 
 
     <script src="../js/app.js"></script>

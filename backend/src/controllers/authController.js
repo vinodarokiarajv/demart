@@ -166,8 +166,76 @@ async function me(req, res) {
 
 }
 
+async function updateMe(req, res) {
+    const firstName = req.body.firstName?.trim();
+    const lastName = req.body.lastName?.trim();
+    const email = req.body.email?.trim();
+    const street = req.body.street?.trim();
+    const postalCode = req.body.postalCode?.trim();
+    const city = req.body.city?.trim();
+    const country = req.body.country?.trim();
+
+    if (
+        !firstName ||
+        !lastName ||
+        !email ||
+        !street ||
+        !postalCode ||
+        !city ||
+        !country
+    ) {
+        return res.status(400).json({
+            message: "All account fields are required"
+        });
+    }
+
+    if (!email.includes("@")) {
+        return res.status(400).json({
+            message: "Please enter a valid email address"
+        });
+    }
+
+    try {
+        const user = await authService.updateUser(
+            req.user.id,
+            firstName,
+            lastName,
+            email,
+            street,
+            postalCode,
+            city,
+            country
+        );
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        res.status(200).json({
+            message: "Account updated successfully",
+            user: user
+        });
+
+    } catch (error) {
+        console.error("Account update error:", error);
+
+        if (error.code === "23505") {
+            return res.status(409).json({
+                message: "Email address is already registered"
+            });
+        }
+
+        res.status(500).json({
+            message: "Account update failed"
+        });
+    }
+}
+
 module.exports = {
     register,
     login,
-    me
+    me,
+    updateMe
 };

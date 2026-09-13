@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Manage Users - DeMart</title>
+
+<link
+    rel="icon"
+    type="image/png"
+    href="../assets/icons/demart-icon.png"
+>
+
+<link
+    rel="stylesheet"
+    href="../css/style.css"
+>
+
+</head>
+
+<body>
+
+<header class="site-header">
+
+    <h1 class="brand">
+        DeMart
+    </h1>
+
+    <nav class="main-nav">
+
+    <a href="home.html">Home</a>
+
+    <a href="products.html">Products</a>
+
+    <a href="login.html" id="login-link">Login</a>
+
+    <a href="register.html" id="register-link">Register</a>
+
+    <a href="account.html" id="account-link">Account</a>
+
+    <a href="orders.html" id="orders-link">My Orders</a>
+
+    <a href="cart.html">Cart</a>
+
+    <a
+        href="admin-users.html"
+        id="admin-users-link"
+        style="display: none;"
+    >
+        Manage Users
+    </a>
+
+    <a href="#" id="logout-link">Logout</a>
+
+</nav>
+
+</header>
+
+
+<main>
+
+    <section class="admin-users-page">
+
+        <div class="admin-users-header">
+
+            <div>
+
+                <p class="admin-eyebrow">
+                    ADMINISTRATION
+                </p>
+
+                <h2>
+                    Manage Users
+                </h2>
+
+                <p>
+                    Manage user access and account roles across DeMart.
+                </p>
+
+            </div>
+
+            <div class="admin-users-summary">
+
+                <span class="admin-summary-label">
+                    ACCESS LEVEL
+                </span>
+
+                <strong>
+                    ADMIN
+                </strong>
+
+            </div>
+
+        </div>
+
+        <div
+            id="admin-users-message"
+            class="account-message"
+            hidden
+        ></div>
+
+        <div class="admin-users-container">
+
+            <div class="admin-users-table-wrapper">
+
+                <table class="admin-users-table">
+
+                    <thead>
+
+                        <tr>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Action</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="admin-users-table-body">
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<footer>
+
+    <p>
+        &copy; 2026 DeMart. All rights reserved.
+    </p>
+
+</footer>
+
+
+<script src="../js/app.js"></script>
+<script src="../js/admin-users.js"></script>
+
+</body>
+
+</html>
