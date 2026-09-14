@@ -70,6 +70,7 @@ async function loginUser(email, password) {
             city,
             country,
             role,
+            account_status,
             created_at
          FROM users
          WHERE email = $1`,
@@ -81,6 +82,10 @@ async function loginUser(email, password) {
     }
 
     const user = result.rows[0];
+
+    if (user.account_status !== "ACTIVE") {
+    return null;
+}
 
     const passwordMatch = await bcrypt.compare(
         password,
@@ -134,6 +139,7 @@ async function getUserById(userId) {
     city,
     country,
     role,
+    account_status,
     created_at
 FROM users
 WHERE id = $1
@@ -221,6 +227,47 @@ async function updateUser(
     };
 }
 
+async function deleteUserAccount(userId) {
+    const deletedEmail =
+        `deleted-user-${userId}-${Date.now()}@demart.invalid`;
+
+    const result = await pool.query(
+        `
+        UPDATE users
+        SET
+            name = 'Deleted User',
+            first_name = 'Deleted',
+            last_name = 'User',
+            email = $1,
+            password_hash = $2,
+            street = NULL,
+            postal_code = NULL,
+            city = NULL,
+            country = NULL,
+            role = 'CUSTOMER',
+            account_status = 'DELETED'
+        WHERE id = $3
+        RETURNING
+            id,
+            name,
+            email,
+            role,
+            created_at
+        `,
+        [
+            deletedEmail,
+            "ACCOUNT_DELETED",
+            userId
+        ]
+    );
+
+    if (result.rows.length === 0) {
+        return null;
+    }
+
+    return result.rows[0];
+}
+
 async function updateUserRole(userId, newRole) {
     const result = await pool.query(
         `
@@ -290,6 +337,7 @@ module.exports = {
     loginUser,
     getUserById,
     updateUser,
+    deleteUserAccount,
     updateUserRole,
     getAdminCount,
     getAllUsers

@@ -2426,3 +2426,29 @@ body {
 body {
     min-height: 100vh;
 }
+
+/* ========================================
+   Account Danger Zone
+   ======================================== */
+
+.account-danger-zone {
+    border: 1px solid #d6b8b8;
+}
+
+.account-danger-zone p {
+    line-height: 1.6;
+}
+
+.account-delete-button {
+    border: 1px solid #b42318;
+    cursor: pointer;
+}
+
+.account-delete-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#delete-account-message {
+    margin-top: 15px;
+}

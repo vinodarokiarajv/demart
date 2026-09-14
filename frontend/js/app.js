@@ -1455,6 +1455,84 @@ if (ordersContainer) {
     loadCustomerOrders();
 }
 
+const deleteAccountButton = document.getElementById(
+    "delete-account-button"
+);
+
+const deleteAccountMessage = document.getElementById(
+    "delete-account-message"
+);
+
+if (deleteAccountButton) {
+
+    deleteAccountButton.addEventListener("click", async function () {
+
+        const storedUser = localStorage.getItem("demartUser");
+
+        if (!storedUser) {
+            window.location.href = "login.html";
+            return;
+        }
+
+        const currentUser = JSON.parse(storedUser);
+
+        const confirmed = window.confirm(
+            "Are you sure you want to delete your DeMart account?\n\n" +
+            "Your personal account information will be removed. " +
+            "This action cannot be undone."
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        deleteAccountButton.disabled = true;
+        deleteAccountButton.textContent = "Deleting...";
+
+        try {
+
+            const response = await fetch(
+                "http://localhost:3000/api/auth/me",
+                {
+                    method: "DELETE",
+                    headers: {
+                        "Authorization":
+                            `Bearer ${currentUser.token}`
+                    }
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message || "Account deletion failed"
+                );
+            }
+
+            localStorage.removeItem("demartUser");
+            localStorage.removeItem("demartCart");
+
+            window.location.href = "../index.html";
+
+        } catch (error) {
+
+            console.error(
+                "Account deletion error:",
+                error
+            );
+
+            deleteAccountMessage.textContent =
+                error.message ||
+                "Account deletion failed. Please try again.";
+
+            deleteAccountButton.disabled = false;
+            deleteAccountButton.textContent =
+                "Delete My Account";
+        }
+    });
+}
+
 /* ========================================
    Active Navigation Item
    ======================================== */
