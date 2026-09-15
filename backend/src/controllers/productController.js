@@ -139,6 +139,12 @@ if (existingProduct) {
     } catch (error) {
         console.error(error);
 
+        if (error.code === "23505") {
+            return res.status(409).json({
+                message: "A product with this name already exists"
+            });
+        }
+
         res.status(500).json({
             message: "Failed to create product"
         });
@@ -147,7 +153,13 @@ if (existingProduct) {
 
 async function updateProduct(req, res) {
 
-    const id = req.params.id;
+    const id = Number(req.params.id);
+
+    if (!Number.isSafeInteger(id) || id <= 0) {
+        return res.status(400).json({
+            message: "Product ID must be a positive integer"
+        });
+    }
 
     const name = req.body.name?.trim();
     const category = req.body.category?.trim();
@@ -158,22 +170,22 @@ async function updateProduct(req, res) {
     const imageUrl = req.body.imageUrl?.trim() || null;
 
     if (!name) {
-    return res.status(400).json({
-        message: "Name is required"
-    });
-}
+        return res.status(400).json({
+            message: "Name is required"
+        });
+    }
 
-if (!category) {
-    return res.status(400).json({
-        message: "Category is required"
-    });
-}
+    if (!category) {
+        return res.status(400).json({
+            message: "Category is required"
+        });
+    }
 
-if (price === undefined || price === null) {
-    return res.status(400).json({
-        message: "Price is required"
-    });
-}
+    if (price === undefined || price === null) {
+        return res.status(400).json({
+            message: "Price is required"
+        });
+    }
 
     if (isNaN(price) || Number(price) < 0) {
         return res.status(400).json({
@@ -191,30 +203,38 @@ if (price === undefined || price === null) {
     }
 
     if (stockQuantity === undefined || stockQuantity === null) {
-  return res.status(400).json({
-    message: "Stock quantity is required"
-  });
-}
+        return res.status(400).json({
+            message: "Stock quantity is required"
+        });
+    }
 
-if (typeof stockQuantity !== "number" || Number.isNaN(stockQuantity)) {
-  return res.status(400).json({
-    message: "Stock quantity must be a number"
-  });
-}
+    if (typeof stockQuantity !== "number" || Number.isNaN(stockQuantity)) {
+        return res.status(400).json({
+            message: "Stock quantity must be a number"
+        });
+    }
 
-if (!Number.isInteger(stockQuantity)) {
-  return res.status(400).json({
-    message: "Stock quantity must be an integer"
-  });
-}
+    if (!Number.isInteger(stockQuantity)) {
+        return res.status(400).json({
+            message: "Stock quantity must be an integer"
+        });
+    }
 
-if (stockQuantity < 0) {
-  return res.status(400).json({
-    message: "Stock quantity must be non-negative"
-  });
-}
+    if (stockQuantity < 0) {
+        return res.status(400).json({
+            message: "Stock quantity must be non-negative"
+        });
+    }
 
     try {
+
+        const existingProduct = await productService.checkProductNameExists(name);
+
+        if (existingProduct && existingProduct.id !== id) {
+            return res.status(409).json({
+                message: "A product with this name already exists"
+            });
+        }
 
         const product = await productService.updateProduct(
             id,
@@ -242,16 +262,28 @@ if (stockQuantity < 0) {
 
         console.error(error);
 
+        if (error.code === "23505") {
+            return res.status(409).json({
+                message: "A product with this name already exists"
+            });
+        }
+
         res.status(500).json({
             message: "Failed to update product"
         });
 
-    }
+        }
 }
 
 async function deleteProduct(req, res) {
 
-    const id = req.params.id;
+    const id = Number(req.params.id);
+
+    if (!Number.isSafeInteger(id) || id <= 0) {
+        return res.status(400).json({
+            message: "Product ID must be a positive integer"
+        });
+    }
 
     try {
 
