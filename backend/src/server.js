@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 
 const authRoutes = require("./routes/authRoutes");
 const productRoutes = require("./routes/productRoutes");
@@ -10,8 +11,9 @@ const adminUserRoutes = require("./routes/adminUserRoutes");
 const pool = require("./db/db");
 
 const app = express();
-
 const PORT = 3000;
+
+app.use(helmet());
 
 const allowedOrigins = (
     process.env.FRONTEND_URL ||
