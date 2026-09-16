@@ -1,8 +1,7 @@
 const jwt = require("jsonwebtoken");
-
 const pool = require("../db/db");
 
-require("dotenv").config();
+const config = require("../config");
 
 async function authMiddleware(req, res, next) {
 
@@ -20,7 +19,7 @@ async function authMiddleware(req, res, next) {
 
         const decoded = jwt.verify(
             token,
-            process.env.JWT_SECRET
+            config.jwtSecret
         );
 
         const result = await pool.query(

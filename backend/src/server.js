@@ -10,8 +10,10 @@ const adminUserRoutes = require("./routes/adminUserRoutes");
 
 const pool = require("./db/db");
 
+const config = require("./config");
+
 const app = express();
-const PORT = 3000;
+const PORT = config.port;
 
 app.use(helmet());
 

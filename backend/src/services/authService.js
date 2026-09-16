@@ -1,7 +1,8 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const pool = require("../db/db");
-require("dotenv").config();
+
+const config = require("../config");
 
 async function registerUser(
     firstName,
@@ -102,7 +103,7 @@ async function loginUser(email, password) {
             email: user.email,
             role: user.role
         },
-        process.env.JWT_SECRET,
+        config.jwtSecret,
         {
             expiresIn: "1h"
         }
@@ -215,7 +216,7 @@ async function updateUser(
             email: user.email,
             role: user.role
         },
-        process.env.JWT_SECRET,
+        config.jwtSecret,
         {
             expiresIn: "1h"
         }
