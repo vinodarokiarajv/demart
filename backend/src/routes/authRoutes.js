@@ -8,25 +8,35 @@ const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-const authLimiter = rateLimit({
+const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 10,
     standardHeaders: "draft-8",
     legacyHeaders: false,
     message: {
-        message: "Too many authentication attempts. Please try again later."
+        message: "Too many login attempts. Please try again later."
+    }
+});
+
+const registrationLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: {
+        message: "Too many registration attempts. Please try again later."
     }
 });
 
 router.post(
     "/register",
-    authLimiter,
+    registrationLimiter,
     authController.register
 );
 
 router.post(
     "/login",
-    authLimiter,
+    loginLimiter,
     authController.login
 );
 

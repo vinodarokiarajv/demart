@@ -1,5 +1,10 @@
 const authService = require("../services/authService");
 
+const {
+    isValidEmail,
+    validateAddressFields
+} = require("../utils/validation");
+
 async function register(req, res) {
     const firstName = req.body.firstName?.trim();
     const lastName = req.body.lastName?.trim();
@@ -25,9 +30,24 @@ async function register(req, res) {
         });
     }
 
-    if (!email.includes("@")) {
+    if (!isValidEmail(email)) {
         return res.status(400).json({
             message: "Please enter a valid email address"
+        });
+    }
+
+    const addressValidationError = validateAddressFields({
+            firstName,
+            lastName,
+            street,
+            postalCode,
+            city,
+            country
+        });
+
+    if (addressValidationError) {
+        return res.status(400).json({
+            message: addressValidationError
         });
     }
 
@@ -189,9 +209,24 @@ async function updateMe(req, res) {
         });
     }
 
-    if (!email.includes("@")) {
+    if (!isValidEmail(email)) {
         return res.status(400).json({
             message: "Please enter a valid email address"
+        });
+    }
+
+    const addressValidationError = validateAddressFields({
+            firstName,
+            lastName,
+            street,
+            postalCode,
+            city,
+            country
+        });
+
+    if (addressValidationError) {
+        return res.status(400).json({
+            message: addressValidationError
         });
     }
 
