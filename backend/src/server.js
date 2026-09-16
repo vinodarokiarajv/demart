@@ -81,6 +81,23 @@ app.get("/api/db-health", async function (req, res) {
 
 });
 
+app.use(function (error, req, res, next) {
+
+    console.error("Unhandled application error:", error);
+
+    if (error.type === "entity.too.large") {
+        return res.status(413).json({
+            status: "error",
+            message: "Request body is too large"
+        });
+    }
+
+    return res.status(error.status || 500).json({
+        status: "error",
+        message: "Internal server error"
+    });
+});
+
 app.listen(PORT, function () {
 
     console.log(`DeMart API running on http://localhost:${PORT}`);
