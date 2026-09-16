@@ -13,7 +13,32 @@ const app = express();
 
 const PORT = 3000;
 
-app.use(cors());
+const allowedOrigins = (
+    process.env.FRONTEND_URL ||
+    "http://127.0.0.1:5500,http://localhost:5500"
+)
+    .split(",")
+    .map(origin => origin.trim())
+    .filter(Boolean);
+
+app.use(
+    cors({
+        origin: function (origin, callback) {
+
+            // Allow non-browser requests such as curl/Postman.
+            if (!origin) {
+                return callback(null, true);
+            }
+
+            if (allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+
+            return callback(null, false);
+        }
+    })
+);
+
 app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
