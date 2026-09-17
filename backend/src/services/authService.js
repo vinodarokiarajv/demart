@@ -130,20 +130,20 @@ async function getUserById(userId) {
     const result = await pool.query(
         `
         SELECT
-    id,
-    name,
-    first_name,
-    last_name,
-    email,
-    street,
-    postal_code,
-    city,
-    country,
-    role,
-    account_status,
-    created_at
-FROM users
-WHERE id = $1
+            id,
+            name,
+            first_name,
+            last_name,
+            email,
+            street,
+            postal_code,
+            city,
+            country,
+            role,
+            account_status,
+            created_at
+        FROM users
+        WHERE id = $1
         `,
         [userId]
     );
@@ -240,14 +240,13 @@ async function deleteUserAccount(userId) {
             first_name = 'Deleted',
             last_name = 'User',
             email = $1,
-            password_hash = $2,
             street = NULL,
             postal_code = NULL,
             city = NULL,
             country = NULL,
             role = 'CUSTOMER',
             account_status = 'DELETED'
-        WHERE id = $3
+        WHERE id = $2
         RETURNING
             id,
             name,
@@ -257,7 +256,6 @@ async function deleteUserAccount(userId) {
         `,
         [
             deletedEmail,
-            "ACCOUNT_DELETED",
             userId
         ]
     );
@@ -324,6 +322,7 @@ async function getAllUsers() {
             city,
             country,
             role,
+            account_status,
             created_at
         FROM users
         ORDER BY id

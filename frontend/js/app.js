@@ -411,6 +411,150 @@ const productContainer = document.querySelector(".product-container");
 
 if (productContainer) {
 
+    const productSearchInput = document.querySelector(
+        '.product-controls input[type="search"]'
+    );
+
+    const productCategorySelect = document.querySelector(
+        '.product-controls select[aria-label="Filter by category"]'
+    );
+
+    const productSortSelect = document.querySelector(
+        '.product-controls select[aria-label="Sort products"]'
+    );
+
+    let allProducts = [];
+
+    function renderProducts(products) {
+
+        productContainer.innerHTML = "";
+
+        if (products.length === 0) {
+
+            const noResultsMessage = document.createElement("div");
+            noResultsMessage.className = "no-products-message";
+
+            noResultsMessage.innerHTML = `
+                <h3>No products found</h3>
+                <p>
+                    Try changing your search or filter criteria.
+                </p>
+            `;
+
+            productContainer.appendChild(noResultsMessage);
+            return;
+        }
+
+        products.forEach(function (product) {
+
+            const productCard = document.createElement("article");
+            productCard.className = "product-card";
+
+            productCard.innerHTML = `
+                <div class="product-image">
+                    <img
+                        src="${product.image_url}"
+                        alt="${product.name}"
+                    >
+                </div>
+
+                <div class="product-info">
+
+                    <p class="product-category">
+                        ${product.category}
+                    </p>
+
+                    <h3>${product.name}</h3>
+
+                    <p class="product-price">
+                        €${Number(product.price).toFixed(2)}
+                    </p>
+
+                    <p class="product-rating">
+                        ${product.rating} / 5
+                    </p>
+
+                    <div class="product-actions">
+
+                        <a href="product-details.html?id=${product.id}">
+                            View Details
+                        </a>
+
+                        <button
+                            type="button"
+                            class="add-to-cart-button"
+                        >
+                            Add to Cart
+                        </button>
+
+                    </div>
+
+                </div>
+            `;
+
+            const addToCartButton =
+                productCard.querySelector(".add-to-cart-button");
+
+            addToCartButton.addEventListener("click", function () {
+                addToCart(product);
+            });
+
+            productContainer.appendChild(productCard);
+        });
+    }
+
+    function applyProductFilters() {
+
+        const searchTerm = productSearchInput
+            ? productSearchInput.value.trim().toLowerCase()
+            : "";
+
+        const selectedCategory = productCategorySelect
+            ? productCategorySelect.value
+            : "";
+
+        const selectedSort = productSortSelect
+            ? productSortSelect.value
+            : "";
+
+        let filteredProducts = allProducts.filter(function (product) {
+
+            const matchesSearch =
+                product.name.toLowerCase().includes(searchTerm);
+
+            const matchesCategory =
+                !selectedCategory ||
+                product.category === selectedCategory;
+
+            return matchesSearch && matchesCategory;
+        });
+
+        if (selectedSort === "price-low") {
+
+            filteredProducts.sort(function (a, b) {
+                return Number(a.price) - Number(b.price);
+            });
+
+        } else if (selectedSort === "price-high") {
+
+            filteredProducts.sort(function (a, b) {
+                return Number(b.price) - Number(a.price);
+            });
+
+        } else if (selectedSort === "name") {
+
+            filteredProducts.sort(function (a, b) {
+                return a.name.localeCompare(
+                    b.name,
+                    undefined,
+                    { sensitivity: "base" }
+                );
+            });
+        }
+
+        renderProducts(filteredProducts);
+    }
+
     async function loadProducts() {
 
         try {
@@ -421,68 +565,50 @@ if (productContainer) {
 
             const result = await response.json();
 
-            productContainer.innerHTML = "";
+            if (!response.ok) {
+                throw new Error(
+                    result.message || "Failed to load products"
+                );
+            }
 
-            result.products.forEach(function (product) {
+            allProducts = result.products;
 
-                const productCard = document.createElement("article");
-
-                productCard.className = "product-card";
-
-                productCard.innerHTML = `
-                    <div class="product-image">
-                        <img src="${product.image_url}" alt="${product.name}">
-                    </div>
-
-                    <div class="product-info">
-
-                        <p class="product-category">
-                            ${product.category}
-                        </p>
-
-                        <h3>${product.name}</h3>
-
-                        <p class="product-price">
-                            €${product.price}
-                        </p>
-
-                        <p class="product-rating">
-                            ${product.rating} / 5
-                        </p>
-
-                        <div class="product-actions">
-
-                            <a href="product-details.html?id=${product.id}">
-                                View Details
-                            </a>
-
-                            <button type="button" class="add-to-cart-button">
-    Add to Cart
-</button>
-
-                        </div>
-
-                    </div>
-                `;
-
-                const addToCartButton =
-    productCard.querySelector(".add-to-cart-button");
-
-addToCartButton.addEventListener("click", function () {
-
-    addToCart(product);
-
-});
-
-productContainer.appendChild(productCard);
-
-            });
+            applyProductFilters();
 
         } catch (error) {
 
             console.error("Failed to load products:", error);
 
+            productContainer.innerHTML = `
+                <div class="no-products-message">
+                    <h3>Unable to load products</h3>
+                    <p>
+                        Please try again later.
+                    </p>
+                </div>
+            `;
         }
+    }
+
+    if (productSearchInput) {
+        productSearchInput.addEventListener(
+            "input",
+            applyProductFilters
+        );
+    }
+
+    if (productCategorySelect) {
+        productCategorySelect.addEventListener(
+            "change",
+            applyProductFilters
+        );
+    }
+
+    if (productSortSelect) {
+        productSortSelect.addEventListener(
+            "change",
+            applyProductFilters
+        );
     }
 
     loadProducts();
