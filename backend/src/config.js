@@ -8,7 +8,8 @@ const requiredVariables = [
     "DB_NAME",
     "DB_USER",
     "DB_PASSWORD",
-    "JWT_SECRET"
+    "JWT_SECRET",
+    "STRIPE_SECRET_KEY"
 ];
 
 for (const variable of requiredVariables) {
@@ -33,8 +34,13 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
     );
 }
 
+const frontendUrl =
+    process.env.FRONTEND_URL ||
+    "http://127.0.0.1:5500";
+
 module.exports = {
     port,
+    frontendUrl,
     db: {
         host: process.env.DB_HOST,
         port: process.env.DB_PORT,
@@ -42,5 +48,9 @@ module.exports = {
         user: process.env.DB_USER,
         password: process.env.DB_PASSWORD
     },
-    jwtSecret: process.env.JWT_SECRET
+    jwtSecret: process.env.JWT_SECRET,
+    stripe: {
+        secretKey: process.env.STRIPE_SECRET_KEY,
+        webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || ""
+    }
 };

@@ -14,18 +14,34 @@
 
 <body>
 
-    <header class="site-header">
+        <header class="site-header">
 
-        <h1 class="brand">DeMart</h1>
+        <a href="home.html" class="brand-link">
+            <span class="brand">DeMart</span>
+        </a>
 
         <nav class="main-nav">
-            <a href="../index.html">Home</a>
+
+            <a href="home.html">Home</a>
+
             <a href="products.html">Products</a>
+
             <a href="login.html" id="login-link">Login</a>
+
             <a href="register.html" id="register-link">Register</a>
+
             <a href="account.html" id="account-link">Account</a>
+
+            <a href="orders.html" id="orders-link">My Orders</a>
+
             <a href="cart.html">Cart</a>
+
+            <a href="admin-users.html" id="admin-users-link">Manage Users</a>
+
+            <a href="admin-orders.html" id="admin-orders-link">Manage Orders</a>
+
             <a href="#" id="logout-link">Logout</a>
+
         </nav>
 
     </header>
@@ -39,13 +55,23 @@
 
             <div class="product-controls">
 
-                <input
-                    type="search"
-                    placeholder="Search products..."
-                    aria-label="Search products"
-                >
+    <div class="product-search-wrapper">
 
-                <select aria-label="Filter by category">
+        <input
+            type="search"
+            placeholder="Search products..."
+            aria-label="Search products"
+            autocomplete="off"
+        >
+
+        <div
+            class="product-suggestions"
+            aria-label="Product suggestions"
+        ></div>
+
+    </div>
+
+    <select aria-label="Filter by category">
     <option value="">All Categories</option>
     <option value="Laptops">Laptops</option>
     <option value="Audio">Audio</option>

@@ -1,13 +1,63 @@
 const pool = require("../db/db");
 
-async function createOrder(client, userId, totalAmount) {
+async function createOrder(
+    client,
+    userId,
+    totalAmount,
+    shippingAmount,
+    shippingAddress,
+    deliveryMethod,
+    paymentMethod,
+    paymentStatus
+) {
     const result = await client.query(
         `
-        INSERT INTO orders (user_id, total_amount)
-        VALUES ($1, $2)
-        RETURNING id, user_id, status, total_amount, created_at
+        INSERT INTO orders (
+            user_id,
+            total_amount,
+            shipping_amount,
+            shipping_name,
+            shipping_street,
+            shipping_postal_code,
+            shipping_city,
+            shipping_country,
+            delivery_method,
+            payment_method,
+            payment_status
+        )
+        VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8,
+            $9, $10, $11
+        )
+        RETURNING
+            id,
+            user_id,
+            status,
+            total_amount,
+            shipping_amount,
+            shipping_name,
+            shipping_street,
+            shipping_postal_code,
+            shipping_city,
+            shipping_country,
+            delivery_method,
+            payment_method,
+            payment_status,
+            created_at
         `,
-        [userId, totalAmount]
+        [
+            userId,
+            totalAmount,
+            shippingAmount,
+            shippingAddress.name,
+            shippingAddress.street,
+            shippingAddress.postalCode,
+            shippingAddress.city,
+            shippingAddress.country,
+            deliveryMethod,
+            paymentMethod,
+            paymentStatus
+        ]
     );
 
     return result.rows[0];
@@ -42,6 +92,15 @@ async function findOrdersByUserId(userId) {
             user_id,
             status,
             total_amount,
+            shipping_amount,
+            shipping_name,
+            shipping_street,
+            shipping_postal_code,
+            shipping_city,
+            shipping_country,
+            delivery_method,
+            payment_method,
+            payment_status,
             created_at
         FROM orders
         WHERE user_id = $1
@@ -61,6 +120,15 @@ async function findOrderByIdAndUserId(orderId, userId) {
             user_id,
             status,
             total_amount,
+            shipping_amount,
+            shipping_name,
+            shipping_street,
+            shipping_postal_code,
+            shipping_city,
+            shipping_country,
+            delivery_method,
+            payment_method,
+            payment_status,
             created_at
         FROM orders
         WHERE id = $1
@@ -73,7 +141,6 @@ async function findOrderByIdAndUserId(orderId, userId) {
 }
 
 async function findOrderItemsByOrderId(orderId) {
-
     const result = await pool.query(
         `
         SELECT
@@ -106,6 +173,10 @@ async function findAllOrders() {
             u.email AS customer_email,
             o.status,
             o.total_amount,
+            o.shipping_amount,
+            o.delivery_method,
+            o.payment_method,
+            o.payment_status,
             o.created_at
         FROM orders o
         INNER JOIN users u
@@ -118,7 +189,6 @@ async function findAllOrders() {
 }
 
 async function updateOrderStatus(orderId, status) {
-
     const result = await pool.query(
         `
         UPDATE orders
@@ -129,6 +199,10 @@ async function updateOrderStatus(orderId, status) {
             user_id,
             status,
             total_amount,
+            shipping_amount,
+            delivery_method,
+            payment_method,
+            payment_status,
             created_at
         `,
         [status, orderId]
@@ -138,7 +212,6 @@ async function updateOrderStatus(orderId, status) {
 }
 
 async function findOrderById(orderId) {
-
     const result = await pool.query(
         `
         SELECT
@@ -146,6 +219,15 @@ async function findOrderById(orderId) {
             user_id,
             status,
             total_amount,
+            shipping_amount,
+            shipping_name,
+            shipping_street,
+            shipping_postal_code,
+            shipping_city,
+            shipping_country,
+            delivery_method,
+            payment_method,
+            payment_status,
             created_at
         FROM orders
         WHERE id = $1

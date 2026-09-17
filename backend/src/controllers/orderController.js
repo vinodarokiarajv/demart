@@ -3,11 +3,20 @@ const orderService = require("../services/orderService");
 async function createOrder(req, res) {
     try {
         const userId = req.user.id;
-        const { items } = req.body;
+
+        const {
+            items,
+            shippingAddress,
+            deliveryMethod,
+            paymentMethod
+        } = req.body;
 
         const result = await orderService.createOrder(
             userId,
-            items
+            items,
+            shippingAddress,
+            deliveryMethod,
+            paymentMethod
         );
 
         res.status(201).json({
@@ -15,8 +24,9 @@ async function createOrder(req, res) {
             order: result.order,
             items: result.items
         });
+
     } catch (error) {
-        console.error(error);
+        console.error("Create order error:", error);
 
         res.status(400).json({
             message: error.message

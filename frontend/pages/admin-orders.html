@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Manage Orders - DeMart</title>
+
+    <link rel="icon" type="image/png" href="../assets/icons/demart-icon.png">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+
+<header class="site-header">
+
+    <a href="home.html" class="brand-link">
+        <span class="brand">DeMart</span>
+    </a>
+
+    <nav class="main-nav">
+
+        <a href="home.html">Home</a>
+
+        <a href="products.html">Products</a>
+
+        <a href="login.html" id="login-link">Login</a>
+
+        <a href="register.html" id="register-link">Register</a>
+
+        <a href="account.html" id="account-link">Account</a>
+
+        <a href="orders.html" id="orders-link">My Orders</a>
+
+        <a href="cart.html">Cart</a>
+
+        <a href="admin-users.html" id="admin-users-link">
+            Manage Users
+        </a>
+
+        <a href="admin-orders.html" id="admin-orders-link">
+            Manage Orders
+        </a>
+
+        <a href="#" id="logout-link">Logout</a>
+
+    </nav>
+
+</header>
+
+<main class="admin-orders-page">
+
+    <header class="admin-orders-header">
+
+        <div>
+            <p class="admin-eyebrow">ADMINISTRATION</p>
+
+            <h1>Manage Orders</h1>
+
+            <p>
+                Review customer orders and manage their fulfillment status.
+            </p>
+        </div>
+
+        <div class="admin-orders-summary">
+
+            <span class="admin-summary-label">
+                TOTAL ORDERS
+            </span>
+
+            <strong id="admin-orders-count">
+                —
+            </strong>
+
+        </div>
+
+    </header>
+
+    <div
+        id="admin-orders-message"
+        class="admin-orders-message"
+        hidden
+    ></div>
+
+    <section class="admin-orders-container">
+
+        <div class="admin-orders-table-wrapper">
+
+            <table class="admin-orders-table">
+
+                <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody id="admin-orders-table-body">
+                    <tr>
+                        <td colspan="6" class="admin-orders-loading">
+                            Loading orders...
+                        </td>
+                    </tr>
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+</main>
+
+<footer>
+    <p>&copy; 2026 DeMart. All rights reserved.</p>
+</footer>
+
+<script src="../js/app.js"></script>
+<script src="../js/admin-orders.js"></script>
+
+</body>
+</html>

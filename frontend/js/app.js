@@ -253,85 +253,144 @@ if (loginForm) {
 
 }
 
-const loginLink = document.getElementById("login-link");
-const registerLink = document.getElementById("register-link");
-const accountLink = document.getElementById("account-link");
-const logoutLink = document.getElementById("logout-link");
-const adminUsersLink = document.getElementById("admin-users-link");
-const ordersLink = document.getElementById("orders-link");
+/* ========================================
+   Navigation State
+   ======================================== */
 
-if (storedUser) {
+function getStoredUser() {
+    try {
+        const user = localStorage.getItem("demartUser");
 
-    const currentUser = JSON.parse(storedUser);
+        return user ? JSON.parse(user) : null;
 
-    if (adminUsersLink) {
-        if (currentUser.role === "ADMIN") {
-            adminUsersLink.style.display = "inline";
-        } else {
-            adminUsersLink.style.display = "none";
-        }
-    }
+    } catch (error) {
 
-    if (ordersLink) {
-        ordersLink.style.display = "inline";
-    }
+        console.error(
+            "Failed to read stored user:",
+            error
+        );
 
-    if (loginLink) {
-        loginLink.style.display = "none";
-    }
+        localStorage.removeItem("demartUser");
 
-    if (registerLink) {
-        registerLink.style.display = "none";
-    }
-
-    if (accountLink) {
-        accountLink.style.display = "inline";
-    }
-
-    if (logoutLink) {
-        logoutLink.style.display = "inline";
-    }
-
-} else {
-
-    if (adminUsersLink) {
-        adminUsersLink.style.display = "none";
-    }
-
-    if (ordersLink) {
-        ordersLink.style.display = "none";
-    }
-
-    if (loginLink) {
-        loginLink.style.display = "inline";
-    }
-
-    if (registerLink) {
-        registerLink.style.display = "inline";
-    }
-
-    if (accountLink) {
-        accountLink.style.display = "none";
-    }
-
-    if (logoutLink) {
-        logoutLink.style.display = "none";
+        return null;
     }
 }
 
+function getCartStorageKey() {
+    const user = getStoredUser();
+
+    if (user && user.id) {
+        return `demartCart:user:${user.id}`;
+    }
+
+    return "demartCart:guest";
+}
+
+function getStoredCart() {
+    try {
+        const cart = localStorage.getItem(getCartStorageKey());
+        return cart ? JSON.parse(cart) : [];
+    } catch (error) {
+        console.error("Failed to read stored cart:", error);
+        return [];
+    }
+}
+
+function saveCart(cart) {
+    localStorage.setItem(
+        getCartStorageKey(),
+        JSON.stringify(cart)
+    );
+}
+
+function clearStoredCart() {
+    localStorage.removeItem(getCartStorageKey());
+}
+
+function updateNavigation() {
+
+    const user = getStoredUser();
+
+    const loginLink =
+        document.getElementById("login-link");
+
+    const registerLink =
+        document.getElementById("register-link");
+
+    const accountLink =
+        document.getElementById("account-link");
+
+    const ordersLink =
+        document.getElementById("orders-link");
+
+    const adminUsersLink =
+        document.getElementById("admin-users-link");
+
+    const adminOrdersLink =
+        document.getElementById("admin-orders-link");
+
+    const logoutLink =
+        document.getElementById("logout-link");
+
+    const isLoggedIn =
+        Boolean(user && user.token);
+
+    const isAdmin =
+        Boolean(
+            isLoggedIn &&
+            user.role === "ADMIN"
+        );
+
+    if (loginLink) {
+        loginLink.style.display =
+            isLoggedIn ? "none" : "";
+    }
+
+    if (registerLink) {
+        registerLink.style.display =
+            isLoggedIn ? "none" : "";
+    }
+
+    if (accountLink) {
+    accountLink.style.display = isLoggedIn ? "inline-flex" : "none";
+}
+
+if (ordersLink) {
+    ordersLink.style.display = isLoggedIn ? "inline-flex" : "none";
+}
+
+if (adminUsersLink) {
+    adminUsersLink.style.display = isAdmin ? "inline-flex" : "none";
+}
+
+if (adminOrdersLink) {
+    adminOrdersLink.style.display = isAdmin ? "inline-flex" : "none";
+}
+
+if (logoutLink) {
+    logoutLink.style.display = isLoggedIn ? "inline-flex" : "none";
+}
+}
+
+updateNavigation();
+
+const logoutLink =
+    document.getElementById("logout-link");
+
 if (logoutLink) {
 
-    logoutLink.addEventListener("click", function (event) {
+    logoutLink.addEventListener(
+        "click",
+        function (event) {
 
-        event.preventDefault();
+            event.preventDefault();
 
-        localStorage.removeItem("demartUser");
-        localStorage.removeItem("demartCart");
+            localStorage.removeItem("demartUser");
 
-        window.location.href = "../index.html";
-
-    });
-
+            window.location.href =
+                "../index.html";
+        }
+    );
 }
 
 const accountName = document.getElementById("account-name");
@@ -376,7 +435,7 @@ if (accountPage) {
 
 function addToCart(product, quantity = 1) {
 
-    let cart = JSON.parse(localStorage.getItem("demartCart")) || [];
+    let cart = getStoredCart();
 
     const existingItem = cart.find(function (item) {
         return item.id === product.id;
@@ -399,10 +458,7 @@ function addToCart(product, quantity = 1) {
 
     }
 
-    localStorage.setItem(
-        "demartCart",
-        JSON.stringify(cart)
-    );
+    saveCart(cart);
 
     console.log("Product added to cart:", product.name);
 }
@@ -413,6 +469,10 @@ if (productContainer) {
 
     const productSearchInput = document.querySelector(
         '.product-controls input[type="search"]'
+    );
+
+    const productSuggestions = document.querySelector(
+        ".product-suggestions"
     );
 
     const productCategorySelect = document.querySelector(
@@ -503,6 +563,67 @@ if (productContainer) {
         });
     }
 
+    function renderProductSuggestions() {
+
+    if (!productSuggestions || !productSearchInput) {
+        return;
+    }
+
+    const searchTerm = productSearchInput.value
+        .trim()
+        .toLowerCase();
+
+    productSuggestions.innerHTML = "";
+
+    if (!searchTerm) {
+        productSuggestions.style.display = "none";
+        return;
+    }
+
+    const matchingProducts = allProducts
+        .filter(function (product) {
+            return product.name
+                .toLowerCase()
+                .includes(searchTerm);
+        })
+        .slice(0, 5);
+
+    if (matchingProducts.length === 0) {
+        productSuggestions.style.display = "none";
+        return;
+    }
+
+    matchingProducts.forEach(function (product) {
+
+        const suggestion = document.createElement("button");
+
+        suggestion.type = "button";
+        suggestion.className = "product-suggestion";
+
+        const name = document.createElement("span");
+name.className = "product-suggestion-name";
+name.textContent = product.name;
+
+const category = document.createElement("span");
+category.className = "product-suggestion-category";
+category.textContent = product.category;
+
+suggestion.appendChild(name);
+suggestion.appendChild(category);
+
+        suggestion.addEventListener("click", function () {
+
+            window.location.href =
+                `product-details.html?id=${product.id}`;
+
+        });
+
+            productSuggestions.appendChild(suggestion);
+        });
+
+        productSuggestions.style.display = "block";
+    }
+
     function applyProductFilters() {
 
         const searchTerm = productSearchInput
@@ -591,11 +712,28 @@ if (productContainer) {
     }
 
     if (productSearchInput) {
+
         productSearchInput.addEventListener(
             "input",
-            applyProductFilters
+            function () {
+                renderProductSuggestions();
+                applyProductFilters();
+            }
         );
     }
+
+    document.addEventListener("click", function (event) {
+
+    if (
+        productSuggestions &&
+        productSearchInput &&
+        !productSearchInput.contains(event.target) &&
+        !productSuggestions.contains(event.target)
+    ) {
+        productSuggestions.style.display = "none";
+        }
+
+    });
 
     if (productCategorySelect) {
         productCategorySelect.addEventListener(
@@ -799,7 +937,7 @@ if (cartItemsContainer) {
     function loadCart() {
 
         const cart =
-            JSON.parse(localStorage.getItem("demartCart")) || [];
+            getStoredCart();
 
             let subtotal = 0;
 
@@ -907,10 +1045,7 @@ removeButton.addEventListener("click", function () {
         return cartItem.id !== item.id;
     });
 
-    localStorage.setItem(
-        "demartCart",
-        JSON.stringify(updatedCart)
-    );
+    saveCart(updatedCart);
 
     loadCart();
 });
@@ -929,10 +1064,7 @@ quantityInput.addEventListener("change", function () {
 
     item.quantity = newQuantity;
 
-    localStorage.setItem(
-        "demartCart",
-        JSON.stringify(cart)
-    );
+    saveCart(cart);
 
     loadCart();
 });
@@ -1015,7 +1147,7 @@ if (checkoutPage) {
 
         if (countryField && checkoutUser.country) {
             countryField.value =
-                checkoutUser.country;
+                String(checkoutUser.country).trim();
         }
     }
 }
@@ -1023,12 +1155,47 @@ if (checkoutPage) {
 const checkoutProductsContainer =
     document.getElementById("checkout-products");
 
-if (checkoutProductsContainer) {
+
+if (checkoutProductsContainer && checkoutPage) {
+
+    const standardDelivery =
+        document.getElementById("standard-delivery");
+
+    const expressDelivery =
+        document.getElementById("express-delivery");
+
+    function getSelectedDeliveryMethod() {
+
+        if (
+            expressDelivery &&
+            expressDelivery.checked
+        ) {
+            return "express";
+        }
+
+        return "standard";
+    }
+
+    function calculateCheckoutShipping(subtotal) {
+
+        const deliveryMethod =
+            getSelectedDeliveryMethod();
+
+        if (deliveryMethod === "express") {
+            return 9.99;
+        }
+
+        if (subtotal >= 100) {
+            return 0;
+        }
+
+        return 4.99;
+    }
 
     function loadCheckout() {
 
         const cart =
-            JSON.parse(localStorage.getItem("demartCart")) || [];
+            getStoredCart();
 
         checkoutProductsContainer.innerHTML = "";
 
@@ -1057,13 +1224,17 @@ if (checkoutProductsContainer) {
             document.querySelector("#checkout-total").textContent =
                 "€0.00";
 
+            if (placeOrderButton) {
+                placeOrderButton.disabled = true;
+            }
+
             return;
         }
 
         cart.forEach(function (item) {
 
             const itemTotal =
-                item.price * item.quantity;
+                Number(item.price) * Number(item.quantity);
 
             subtotal += itemTotal;
 
@@ -1090,7 +1261,7 @@ if (checkoutProductsContainer) {
         });
 
         const shipping =
-            subtotal >= 100 ? 0 : 4.99;
+            calculateCheckoutShipping(subtotal);
 
         const total =
             subtotal + shipping;
@@ -1107,81 +1278,239 @@ if (checkoutProductsContainer) {
             `€${total.toFixed(2)}`;
     }
 
+    if (standardDelivery) {
+        standardDelivery.addEventListener(
+            "change",
+            loadCheckout
+        );
+    }
+
+    if (expressDelivery) {
+        expressDelivery.addEventListener(
+            "change",
+            loadCheckout
+        );
+    }
+
     loadCheckout();
 }
 
-const placeOrderButton = document.getElementById("place-order-button");
+
+const placeOrderButton =
+    document.getElementById("place-order-button");
 
 if (placeOrderButton) {
 
-    placeOrderButton.addEventListener("click", async function () {
+    placeOrderButton.addEventListener(
+        "click",
+        async function () {
 
-        const user = JSON.parse(
-            localStorage.getItem("demartUser")
-        );
+            const user = getStoredUser();
 
-        if (!user || !user.token) {
-            window.location.href = "login.html";
-            return;
-        }
-
-        const cart =
-            JSON.parse(localStorage.getItem("demartCart")) || [];
-
-        if (cart.length === 0) {
-            alert("Your cart is empty.");
-            return;
-        }
-
-        const items = cart.map(function (item) {
-            return {
-                productId: item.id,
-                quantity: item.quantity
-            };
-        });
-
-        placeOrderButton.disabled = true;
-        placeOrderButton.textContent = "Placing Order...";
-
-        try {
-
-            const response = await fetch(
-                "http://localhost:3000/api/orders",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${user.token}`
-                    },
-                    body: JSON.stringify({
-                        items: items
-                    })
-                }
-            );
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    result.message || "Failed to place order"
-                );
+            if (!user || !user.token) {
+                window.location.href = "login.html";
+                return;
             }
 
-            localStorage.removeItem("demartCart");
+            const cart = getStoredCart();
 
-            window.location.href =
-                `order-confirmation.html?orderId=${result.order.id}`;
+            if (cart.length === 0) {
+                alert("Your cart is empty.");
+                return;
+            }
 
-        } catch (error) {
+            const firstNameField =
+                document.getElementById("first-name");
 
-            console.error("Failed to place order:", error);
+            const lastNameField =
+                document.getElementById("last-name");
 
-            alert(error.message);
+            const streetField =
+                document.getElementById("street");
 
-            placeOrderButton.disabled = false;
-            placeOrderButton.textContent = "Place Order";
+            const postalCodeField =
+                document.getElementById("postal-code");
+
+            const cityField =
+                document.getElementById("city");
+
+            const countryField =
+                document.getElementById("country");
+
+            const standardDelivery =
+                document.getElementById("standard-delivery");
+
+            const expressDelivery =
+                document.getElementById("express-delivery");
+
+            const cardPayment =
+                document.getElementById("card-payment");
+
+            const paypalPayment =
+                document.getElementById("paypal-payment");
+
+            const firstName =
+                firstNameField
+                    ? firstNameField.value.trim()
+                    : "";
+
+            const lastName =
+                lastNameField
+                    ? lastNameField.value.trim()
+                    : "";
+
+            const street =
+                streetField
+                    ? streetField.value.trim()
+                    : "";
+
+            const postalCode =
+                postalCodeField
+                    ? postalCodeField.value.trim()
+                    : "";
+
+            const city =
+                cityField
+                    ? cityField.value.trim()
+                    : "";
+
+            const country =
+                countryField
+                    ? countryField.value.trim()
+                    : "";
+
+            if (!firstName) {
+                alert("First name is required.");
+                return;
+            }
+
+            if (!lastName) {
+                alert("Last name is required.");
+                return;
+            }
+
+            if (!street) {
+                alert("Street address is required.");
+                return;
+            }
+
+            if (!postalCode) {
+                alert("Postal code is required.");
+                return;
+            }
+
+            if (!city) {
+                alert("City is required.");
+                return;
+            }
+
+            if (!country) {
+                alert("Country is required.");
+                return;
+            }
+
+            const deliveryMethod =
+                expressDelivery &&
+                expressDelivery.checked
+                    ? "express"
+                    : "standard";
+
+            const paymentMethod =
+                paypalPayment &&
+                paypalPayment.checked
+                    ? "paypal"
+                    : "card";
+
+            if (
+                !standardDelivery?.checked &&
+                !expressDelivery?.checked
+            ) {
+                alert("Please select a delivery method.");
+                return;
+            }
+
+            if (
+                !cardPayment?.checked &&
+                !paypalPayment?.checked
+            ) {
+                alert("Please select a payment method.");
+                return;
+            }
+
+            const items = cart.map(function (item) {
+                return {
+                    productId: item.id,
+                    quantity: item.quantity
+                };
+            });
+
+            const shippingAddress = {
+                name: `${firstName} ${lastName}`.trim(),
+                street: street,
+                postalCode: postalCode,
+                city: city,
+                country: country
+            };
+
+            placeOrderButton.disabled = true;
+            placeOrderButton.textContent =
+                "Placing Order...";
+
+            try {
+
+                const response = await fetch(
+                    "http://localhost:3000/api/orders",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization":
+                                `Bearer ${user.token}`
+                        },
+
+                        body: JSON.stringify({
+                            items: items,
+                            shippingAddress: shippingAddress,
+                            deliveryMethod: deliveryMethod,
+                            paymentMethod: paymentMethod
+                        })
+                    }
+                );
+
+                const result =
+                    await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        result.message ||
+                        "Failed to place order"
+                    );
+                }
+
+                clearStoredCart();
+
+                window.location.href =
+                    `order-confirmation.html?orderId=${result.order.id}`;
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to place order:",
+                    error
+                );
+
+                alert(
+                    error.message ||
+                    "Failed to place order. Please try again."
+                );
+
+                placeOrderButton.disabled = false;
+                placeOrderButton.textContent =
+                    "Place Order";
+            }
         }
-    });
+    );
 }
 
 /* ========================================
@@ -1195,13 +1524,10 @@ if (orderDetailsContainer) {
 
     async function loadOrderConfirmation() {
 
-        const user =
-            JSON.parse(localStorage.getItem("demartUser"));
+        const user = getStoredUser();
 
         if (!user || !user.token) {
-
             window.location.href = "login.html";
-
             return;
         }
 
@@ -1242,7 +1568,6 @@ if (orderDetailsContainer) {
             const result = await response.json();
 
             if (!response.ok) {
-
                 throw new Error(
                     result.message ||
                     "Failed to load order"
@@ -1259,7 +1584,39 @@ if (orderDetailsContainer) {
                 orderDate.toLocaleString();
 
             const statusClass =
-                order.status.toLowerCase();
+                String(order.status || "").toLowerCase();
+
+            const deliveryMethod =
+                String(order.delivery_method || "standard")
+                    .toLowerCase();
+
+            const paymentMethod =
+                String(order.payment_method || "card")
+                    .toLowerCase();
+
+            const paymentStatus =
+                String(order.payment_status || "PENDING")
+                    .toLowerCase();
+
+            const shippingAmount =
+                Number(order.shipping_amount || 0);
+
+            const deliveryLabel =
+                deliveryMethod === "express"
+                    ? "Express Delivery"
+                    : "Standard Delivery";
+
+            const paymentLabel =
+                paymentMethod === "paypal"
+                    ? "PayPal"
+                    : "Credit / Debit Card";
+
+            const paymentStatusLabel =
+                paymentStatus === "paid"
+                    ? "Paid"
+                    : paymentStatus === "failed"
+                        ? "Failed"
+                        : "Pending";
 
             let itemsHtml = "";
 
@@ -1289,8 +1646,8 @@ if (orderDetailsContainer) {
                             </p>
 
                             <p>
-                                Unit Price:
                                 €${Number(item.unit_price).toFixed(2)}
+                                each
                             </p>
 
                         </div>
@@ -1303,46 +1660,128 @@ if (orderDetailsContainer) {
                 `;
             });
 
+            const shippingAddress =
+                order.shipping_name ||
+                order.shipping_street ||
+                order.shipping_city ||
+                order.shipping_postal_code ||
+                order.shipping_country
+                    ? `
+                        <div class="order-info-section">
+
+                            <h2>Shipping Address</h2>
+
+                            <p>
+                                ${order.shipping_name || ""}
+                            </p>
+
+                            <p>
+                                ${order.shipping_street || ""}
+                            </p>
+
+                            <p>
+                                ${order.shipping_postal_code || ""}
+                                ${order.shipping_city || ""}
+                            </p>
+
+                            <p>
+                                ${order.shipping_country || ""}
+                            </p>
+
+                        </div>
+                    `
+                    : "";
+
             orderDetailsContainer.innerHTML = `
+
+                <div class="order-success-header">
+
+                    <h1>Order Confirmed</h1>
+
+                    <p>
+                        Thank you for your order.
+                    </p>
+
+                </div>
 
                 <div class="order-summary">
 
                     <div class="order-summary-item">
 
-                        <strong>Order Number</strong>
+                        <span>Order Number</span>
 
-                        <span>
+                        <strong>
                             #${order.id}
-                        </span>
+                        </strong>
 
                     </div>
 
                     <div class="order-summary-item">
 
-                        <strong>Status</strong>
+                        <span>Order Date</span>
 
-                        <span>
-                            <span class="
-                                order-status
-                                order-status-${statusClass}
-                            ">
-                                ${order.status}
-                            </span>
-                        </span>
-
-                    </div>
-
-                    <div class="order-summary-item">
-
-                        <strong>Order Date</strong>
-
-                        <span>
+                        <strong>
                             ${formattedDate}
-                        </span>
+                        </strong>
+
+                    </div>
+
+                    <div class="order-summary-item">
+
+                        <span>Status</span>
+
+                        <strong class="order-status ${statusClass}">
+                            ${order.status}
+                        </strong>
 
                     </div>
 
                 </div>
+
+                <div class="order-info-grid">
+
+                    <div class="order-info-section">
+
+                        <h2>Delivery</h2>
+
+                        <p>
+                            <strong>
+                                ${deliveryLabel}
+                            </strong>
+                        </p>
+
+                        <p>
+                            ${
+                                deliveryMethod === "express"
+                                    ? "1–2 business days"
+                                    : "3–5 business days"
+                            }
+                        </p>
+
+                    </div>
+
+                    <div class="order-info-section">
+
+                        <h2>Payment</h2>
+
+                        <p>
+                            <strong>
+                                ${paymentLabel}
+                            </strong>
+                        </p>
+
+                        <p>
+                            Status:
+                            <strong>
+                                ${paymentStatusLabel}
+                            </strong>
+                        </p>
+
+                    </div>
+
+                </div>
+
+                ${shippingAddress}
 
                 <div class="order-items">
 
@@ -1352,13 +1791,31 @@ if (orderDetailsContainer) {
 
                 </div>
 
-                <div class="order-confirmation-total">
+                <div class="order-confirmation-breakdown">
 
-                    <span>Total</span>
+                    <div class="order-confirmation-total">
 
-                    <span>
-                        €${Number(order.total_amount).toFixed(2)}
-                    </span>
+                        <span>Shipping</span>
+
+                        <span>
+                            ${
+                                shippingAmount === 0
+                                    ? "Free"
+                                    : `€${shippingAmount.toFixed(2)}`
+                            }
+                        </span>
+
+                    </div>
+
+                    <div class="order-confirmation-total">
+
+                        <span>Total</span>
+
+                        <span>
+                            €${Number(order.total_amount).toFixed(2)}
+                        </span>
+
+                    </div>
 
                 </div>
 
@@ -1410,6 +1867,8 @@ if (orderDetailsContainer) {
 
     loadOrderConfirmation();
 }
+
+
 
 /* ========================================
    Customer Orders
@@ -1636,8 +2095,8 @@ if (deleteAccountButton) {
                 );
             }
 
+            clearStoredCart();
             localStorage.removeItem("demartUser");
-            localStorage.removeItem("demartCart");
 
             window.location.href = "../index.html";
 
@@ -1663,24 +2122,55 @@ if (deleteAccountButton) {
    Active Navigation Item
    ======================================== */
 
-const currentPath = window.location.pathname;
+function updateActiveNavigation() {
 
-const navLinks = document.querySelectorAll(".main-nav a");
+    const currentPath = window.location.pathname;
 
-navLinks.forEach(function (link) {
+    const navLinks = document.querySelectorAll(".main-nav a");
 
-    // Ignore action links such as Logout.
-    if (link.getAttribute("href") === "#") {
-        return;
-    }
+    navLinks.forEach(function (link) {
 
-    const linkPath = new URL(
-        link.href,
-        window.location.origin
-    ).pathname;
+        link.classList.remove("active");
 
-    if (linkPath === currentPath) {
-        link.classList.add("active");
-    }
+        const href = link.getAttribute("href");
 
-});
+        if (!href || href === "#") {
+            return;
+        }
+
+        const linkPath =
+            new URL(href, window.location.href).pathname;
+
+        let isActive = linkPath === currentPath;
+
+        /*
+         * Group related pages under their primary navigation item.
+         */
+
+        if (
+            currentPath.endsWith("/product-details.html") &&
+            linkPath.endsWith("/products.html")
+        ) {
+            isActive = true;
+        }
+
+        if (
+            currentPath.endsWith("/checkout.html") &&
+            linkPath.endsWith("/cart.html")
+        ) {
+            isActive = true;
+        }
+
+        if (
+            currentPath.endsWith("/order-confirmation.html") &&
+            linkPath.endsWith("/orders.html")
+        ) {
+            isActive = true;
+        }
+
+        if (isActive) {
+            link.classList.add("active");
+        }
+    });
+}
+updateActiveNavigation();

@@ -198,6 +198,23 @@ async function decreaseStock(client, productId, quantity) {
     return result.rows[0];
 }
 
+async function increaseStock(client, productId, quantity) {
+    const result = await client.query(
+        `
+        UPDATE products
+        SET stock_quantity = stock_quantity + $2
+        WHERE id = $1
+        RETURNING
+            id,
+            name,
+            stock_quantity
+        `,
+        [productId, quantity]
+    );
+
+    return result.rows[0];
+}
+
 module.exports = {
     findAllProducts,
     findProductById,
@@ -205,5 +222,6 @@ module.exports = {
     createProduct,
     updateProduct,
     deleteProduct,
-    decreaseStock
+    decreaseStock,
+    increaseStock
 };
