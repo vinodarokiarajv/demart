@@ -174,6 +174,68 @@ if (registerForm) {
     });
 }
 
+const loginPasswordInput = document.getElementById("login-password");
+const loginPasswordToggle = document.getElementById("login-password-toggle");
+
+if (loginPasswordInput && loginPasswordToggle) {
+    loginPasswordToggle.addEventListener("click", function () {
+        const isPasswordVisible =
+            loginPasswordInput.type === "text";
+
+        loginPasswordInput.type = isPasswordVisible
+            ? "password"
+            : "text";
+
+        loginPasswordToggle.setAttribute(
+            "aria-label",
+            isPasswordVisible
+                ? "Show password"
+                : "Hide password"
+        );
+
+        loginPasswordToggle.setAttribute(
+            "aria-pressed",
+            String(!isPasswordVisible)
+        );
+
+        loginPasswordToggle.innerHTML = isPasswordVisible
+            ? `
+                <svg
+                    class="password-toggle-icon"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    focusable="false"
+                >
+                    <path
+                        d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"
+                    ></path>
+                    <circle cx="12" cy="12" r="2.5"></circle>
+                </svg>
+            `
+            : `
+                <svg
+                    class="password-toggle-icon"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    focusable="false"
+                >
+                    <path
+                        d="M3 3l18 18"
+                    ></path>
+                    <path
+                        d="M10.6 6.2A10.8 10.8 0 0 1 12 6c6 0 9.5 6 9.5 6a17.7 17.7 0 0 1-3.2 3.8"
+                    ></path>
+                    <path
+                        d="M6.2 6.2C3.9 7.8 2.5 12 2.5 12s3.5 6 9.5 6c1.4 0 2.7-.3 3.8-.8"
+                    ></path>
+                    <path
+                        d="M9.9 9.9a3 3 0 0 0 4.2 4.2"
+                    ></path>
+                </svg>
+            `;
+    });
+}
+
 const loginForm = document.getElementById("login-form");
 
 if (loginForm) {
@@ -1094,6 +1156,75 @@ if (checkoutPage) {
 
     } else {
 
+                async function handleCancelledPayment() {
+
+            const checkoutParams =
+                new URLSearchParams(window.location.search);
+
+            const paymentStatus =
+                checkoutParams.get("payment");
+
+            const cancelledOrderId =
+                checkoutParams.get("orderId");
+
+            if (
+                paymentStatus !== "cancelled" ||
+                !cancelledOrderId
+            ) {
+                return;
+            }
+
+            try {
+
+                const cancelResponse =
+                    await fetch(
+                        "http://localhost:3000/api/payments/cancel",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type":
+                                    "application/json",
+                                "Authorization":
+                                    `Bearer ${checkoutUser.token}`
+                            },
+                            body: JSON.stringify({
+                                orderId:
+                                    Number(cancelledOrderId)
+                            })
+                        }
+                    );
+
+                const cancelResult =
+                    await cancelResponse.json();
+
+                if (!cancelResponse.ok) {
+                    throw new Error(
+                        cancelResult.message ||
+                        "Unable to cancel payment."
+                    );
+                }
+
+                window.location.href =
+                    `order-confirmation.html?orderId=${encodeURIComponent(
+                        cancelledOrderId
+                    )}`;
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to cancel Stripe Checkout session:",
+                    error
+                );
+
+                alert(
+                    error.message ||
+                    "Unable to cancel the payment session. Please try again."
+                );
+            }
+        }
+
+        handleCancelledPayment();
+
         const emailField =
             document.getElementById("email");
 
@@ -1409,18 +1540,6 @@ if (placeOrderButton) {
                 return;
             }
 
-            const deliveryMethod =
-                expressDelivery &&
-                expressDelivery.checked
-                    ? "express"
-                    : "standard";
-
-            const paymentMethod =
-                paypalPayment &&
-                paypalPayment.checked
-                    ? "paypal"
-                    : "card";
-
             if (
                 !standardDelivery?.checked &&
                 !expressDelivery?.checked
@@ -1429,13 +1548,23 @@ if (placeOrderButton) {
                 return;
             }
 
-            if (
-                !cardPayment?.checked &&
-                !paypalPayment?.checked
-            ) {
-                alert("Please select a payment method.");
+            if (!cardPayment?.checked) {
+                if (paypalPayment?.checked) {
+                    alert(
+                        "PayPal payments are not available yet. Please select Credit / Debit Card."
+                    );
+                } else {
+                    alert("Please select a payment method.");
+                }
+
                 return;
             }
+
+            const deliveryMethod =
+                expressDelivery &&
+                expressDelivery.checked
+                    ? "express"
+                    : "standard";
 
             const items = cart.map(function (item) {
                 return {
@@ -1454,7 +1583,7 @@ if (placeOrderButton) {
 
             placeOrderButton.disabled = true;
             placeOrderButton.textContent =
-                "Placing Order...";
+                "Preparing Secure Payment...";
 
             try {
 
@@ -1462,18 +1591,16 @@ if (placeOrderButton) {
                     "http://localhost:3000/api/orders",
                     {
                         method: "POST",
-
                         headers: {
                             "Content-Type": "application/json",
                             "Authorization":
                                 `Bearer ${user.token}`
                         },
-
                         body: JSON.stringify({
                             items: items,
                             shippingAddress: shippingAddress,
                             deliveryMethod: deliveryMethod,
-                            paymentMethod: paymentMethod
+                            paymentMethod: "card"
                         })
                     }
                 );
@@ -1484,25 +1611,40 @@ if (placeOrderButton) {
                 if (!response.ok) {
                     throw new Error(
                         result.message ||
-                        "Failed to place order"
+                        "Failed to create checkout session"
                     );
                 }
 
-                clearStoredCart();
+                if (
+                    !result.payment ||
+                    !result.payment.checkoutUrl
+                ) {
+                    throw new Error(
+                        "Secure payment session could not be created."
+                    );
+                }
 
+                /*
+                 * Do not clear the cart here.
+                 *
+                 * The customer has not completed payment yet.
+                 * The order and inventory reservation already exist
+                 * on the server, and Stripe will redirect the
+                 * customer after the payment attempt.
+                 */
                 window.location.href =
-                    `order-confirmation.html?orderId=${result.order.id}`;
+                    result.payment.checkoutUrl;
 
             } catch (error) {
 
                 console.error(
-                    "Failed to place order:",
+                    "Failed to start payment:",
                     error
                 );
 
                 alert(
                     error.message ||
-                    "Failed to place order. Please try again."
+                    "Failed to start payment. Please try again."
                 );
 
                 placeOrderButton.disabled = false;
@@ -1541,18 +1683,26 @@ if (orderDetailsContainer) {
 
             orderDetailsContainer.innerHTML = `
                 <div class="order-error">
+
                     <h3>Order Not Found</h3>
-                    <p>No order ID was provided.</p>
-                    <a href="orders.html" class="account-button">
+
+                    <p>
+                        No order ID was provided.
+                    </p>
+
+                    <a
+                        href="orders.html"
+                        class="account-button">
                         Back to My Orders
                     </a>
+
                 </div>
             `;
 
             return;
         }
 
-        try {
+        async function fetchOrder() {
 
             const response = await fetch(
                 `http://localhost:3000/api/orders/${orderId}`,
@@ -1574,6 +1724,11 @@ if (orderDetailsContainer) {
                 );
             }
 
+            return result;
+        }
+
+        function renderOrder(result) {
+
             const order = result.order;
             const items = result.items || [];
 
@@ -1584,19 +1739,26 @@ if (orderDetailsContainer) {
                 orderDate.toLocaleString();
 
             const statusClass =
-                String(order.status || "").toLowerCase();
+                String(order.status || "")
+                    .toLowerCase();
 
             const deliveryMethod =
-                String(order.delivery_method || "standard")
-                    .toLowerCase();
+                String(
+                    order.delivery_method ||
+                    "standard"
+                ).toLowerCase();
 
             const paymentMethod =
-                String(order.payment_method || "card")
-                    .toLowerCase();
+                String(
+                    order.payment_method ||
+                    "card"
+                ).toLowerCase();
 
             const paymentStatus =
-                String(order.payment_status || "PENDING")
-                    .toLowerCase();
+                String(
+                    order.payment_status ||
+                    "PENDING"
+                ).toUpperCase();
 
             const shippingAmount =
                 Number(order.shipping_amount || 0);
@@ -1611,12 +1773,48 @@ if (orderDetailsContainer) {
                     ? "PayPal"
                     : "Credit / Debit Card";
 
+            let pageTitle = "Order Processing";
+            let pageMessage =
+                "Your order has been created and your payment is being processed.";
+
+            if (paymentStatus === "PAID") {
+
+                pageTitle = "Order Confirmed";
+
+                pageMessage =
+                    "Thank you for your order. Your payment was successful.";
+
+            } else if (paymentStatus === "FAILED") {
+
+                pageTitle = "Payment Failed";
+
+                pageMessage =
+                    "Your payment could not be completed.";
+
+            } else if (paymentStatus === "CANCELLED") {
+
+                pageTitle = "Payment Cancelled";
+
+                pageMessage =
+                    "The payment was cancelled and the order will not be processed.";
+
+            } else if (paymentStatus === "PENDING") {
+
+                pageTitle = "Payment Processing";
+
+                pageMessage =
+                    "Your order was created. We are waiting for payment confirmation.";
+
+            }
+
             const paymentStatusLabel =
-                paymentStatus === "paid"
+                paymentStatus === "PAID"
                     ? "Paid"
-                    : paymentStatus === "failed"
+                    : paymentStatus === "FAILED"
                         ? "Failed"
-                        : "Pending";
+                        : paymentStatus === "CANCELLED"
+                            ? "Cancelled"
+                            : "Pending";
 
             let itemsHtml = "";
 
@@ -1630,9 +1828,11 @@ if (orderDetailsContainer) {
                     <div class="order-item">
 
                         <div class="order-item-image">
+
                             <img
                                 src="${item.image_url}"
                                 alt="${item.product_name}">
+
                         </div>
 
                         <div class="order-item-info">
@@ -1653,7 +1853,9 @@ if (orderDetailsContainer) {
                         </div>
 
                         <div class="order-item-total">
+
                             €${itemTotal.toFixed(2)}
+
                         </div>
 
                     </div>
@@ -1696,10 +1898,10 @@ if (orderDetailsContainer) {
 
                 <div class="order-success-header">
 
-                    <h1>Order Confirmed</h1>
+                    <h1>${pageTitle}</h1>
 
                     <p>
-                        Thank you for your order.
+                        ${pageMessage}
                     </p>
 
                 </div>
@@ -1836,6 +2038,61 @@ if (orderDetailsContainer) {
                 </div>
             `;
 
+            return {
+                order,
+                items,
+                paymentStatus
+            };
+        }
+
+        try {
+
+            let result = await fetchOrder();
+
+            let rendered =
+                renderOrder(result);
+
+            /*
+             * Stripe redirects the customer immediately after
+             * checkout. The webhook that marks the payment PAID
+             * can arrive slightly later.
+             *
+             * Poll briefly so the confirmation page can reflect
+             * the authoritative server-side payment status.
+             */
+            if (rendered.paymentStatus === "PENDING") {
+
+                for (let attempt = 0; attempt < 5; attempt++) {
+
+                    await new Promise(function (resolve) {
+                        setTimeout(resolve, 1000);
+                    });
+
+                    result = await fetchOrder();
+
+                    rendered = renderOrder(result);
+
+                    if (
+                        rendered.paymentStatus === "PAID" ||
+                        rendered.paymentStatus === "FAILED" ||
+                        rendered.paymentStatus === "CANCELLED"
+                    ) {
+                        break;
+                    }
+                }
+            }
+
+            /*
+             * Clear the cart only after the server confirms that
+             * the payment is PAID.
+             *
+             * This avoids losing the customer's cart when a
+             * payment is cancelled or fails.
+             */
+            if (rendered.paymentStatus === "PAID") {
+                clearStoredCart();
+            }
+
         } catch (error) {
 
             console.error(
@@ -1867,8 +2124,6 @@ if (orderDetailsContainer) {
 
     loadOrderConfirmation();
 }
-
-
 
 /* ========================================
    Customer Orders

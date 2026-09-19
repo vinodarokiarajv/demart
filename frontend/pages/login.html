@@ -79,19 +79,38 @@
 
 
                     <div class="form-group">
+    <label for="login-password">
+        Password
+    </label>
 
-                        <label for="login-password">
-                            Password
-                        </label>
-
-                        <input
-                            id="login-password"
-                            type="password"
-                            placeholder="Enter your password"
-                            required
-                        >
-
-                    </div>
+    <div class="password-input-wrapper">
+        <input
+            id="login-password"
+            type="password"
+            placeholder="Enter your password"
+            required
+        >
+        <button
+    type="button"
+    class="password-toggle"
+    id="login-password-toggle"
+    aria-label="Show password"
+    aria-pressed="false"
+>
+    <svg
+        class="password-toggle-icon"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        focusable="false"
+    >
+        <path
+            d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"
+        ></path>
+        <circle cx="12" cy="12" r="2.5"></circle>
+    </svg>
+</button>
+    </div>
+</div>
 
 
                     <div class="auth-options">

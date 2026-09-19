@@ -188,8 +188,12 @@ async function findAllOrders() {
     return result.rows;
 }
 
-async function updateOrderStatus(orderId, status) {
-    const result = await pool.query(
+async function updateOrderStatus(
+    orderId,
+    status,
+    client = pool
+) {
+    const result = await client.query(
         `
         UPDATE orders
         SET status = $1
@@ -206,6 +210,63 @@ async function updateOrderStatus(orderId, status) {
             created_at
         `,
         [status, orderId]
+    );
+
+    return result.rows[0];
+}
+
+async function updateOrderAndPaymentStatus(
+    orderId,
+    orderStatus,
+    paymentStatus,
+    client = pool
+) {
+    const result = await client.query(
+        `
+        UPDATE orders
+        SET
+            status = $1,
+            payment_status = $2
+        WHERE id = $3
+        RETURNING
+            id,
+            user_id,
+            status,
+            total_amount,
+            shipping_amount,
+            delivery_method,
+            payment_method,
+            payment_status,
+            created_at
+        `,
+        [orderStatus, paymentStatus, orderId]
+    );
+
+    return result.rows[0];
+}
+
+async function updatePaymentStatus(
+    orderId,
+    paymentStatus,
+    client = pool
+) {
+    const result = await client.query(
+        `
+        UPDATE orders
+        SET payment_status = $1
+        WHERE id = $2
+        RETURNING
+            id,
+            user_id,
+            status,
+            total_amount,
+            shipping_amount,
+            delivery_method,
+            payment_method,
+            payment_status,
+            created_at
+        `,
+        [paymentStatus, orderId]
     );
 
     return result.rows[0];
@@ -246,5 +307,7 @@ module.exports = {
     findOrderItemsByOrderId,
     findAllOrders,
     updateOrderStatus,
+    updateOrderAndPaymentStatus,
+    updatePaymentStatus,
     findOrderById
 };

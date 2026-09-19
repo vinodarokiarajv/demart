@@ -3,6 +3,10 @@ const pool = require("../db/db");
 const orderRepository = require("../repositories/orderRepository");
 const productRepository = require("../repositories/productRepository");
 
+const inventoryReservationRepository = require(
+    "../repositories/inventoryReservationRepository"
+);
+
 const FREE_SHIPPING_THRESHOLD = 100;
 const STANDARD_SHIPPING_FEE = 4.99;
 const EXPRESS_SHIPPING_FEE = 9.99;
@@ -131,6 +135,7 @@ async function createOrder(
 
             orderItems.push({
                 productId: product.id,
+                productName: product.name,
                 quantity,
                 unitPrice
             });
@@ -151,9 +156,8 @@ async function createOrder(
             subtotal + shippingAmount;
 
         /*
-         * Payment integration is not implemented yet.
-         * Therefore every newly created order starts with
-         * PENDING payment status.
+         * Every newly created order starts with PENDING payment
+         * status until the Stripe Checkout payment is completed.
          */
         const paymentStatus = "PENDING";
 
@@ -176,26 +180,45 @@ async function createOrder(
             );
 
         for (const item of orderItems) {
-            const updatedProduct =
-                await productRepository.decreaseStock(
+
+            const reservation =
+
+                await inventoryReservationRepository.reserveInventory(
+
                     client,
+
+                    order.id,
+
                     item.productId,
+
                     item.quantity
+
                 );
 
-            if (!updatedProduct) {
+            if (!reservation) {
+
                 throw new Error(
+
                     `Insufficient stock for product ID: ${item.productId}`
+
                 );
+
             }
 
             await orderRepository.createOrderItem(
+
                 client,
+
                 order.id,
+
                 item.productId,
+
                 item.quantity,
+
                 item.unitPrice
+
             );
+
         }
 
         await client.query("COMMIT");
@@ -316,10 +339,62 @@ async function updateOrderStatus(orderId, newStatus) {
         );
     }
 
-    return await orderRepository.updateOrderStatus(
-        orderId,
-        newStatus
-    );
+    if (newStatus !== "CANCELLED") {
+        return await orderRepository.updateOrderStatus(
+            orderId,
+            newStatus
+        );
+    }
+
+    const client = await pool.connect();
+
+    try {
+        await client.query("BEGIN");
+
+        const reservations =
+            await inventoryReservationRepository.findActiveReservationsByOrderId(
+                orderId,
+                client
+            );
+
+        for (const reservation of reservations) {
+            await inventoryReservationRepository.releaseReservation(
+                client,
+                reservation.id
+            );
+        }
+
+        let updatedOrder;
+
+        if (order.payment_status === "PENDING") {
+            updatedOrder =
+                await orderRepository.updateOrderAndPaymentStatus(
+                    orderId,
+                    "CANCELLED",
+                    "CANCELLED",
+                    client
+                );
+        } else {
+            updatedOrder =
+                await orderRepository.updateOrderStatus(
+                    orderId,
+                    "CANCELLED",
+                    client
+                );
+        }
+
+        await client.query("COMMIT");
+
+        return updatedOrder;
+    } catch (error) {
+        try {
+            await client.query("ROLLBACK");
+        } catch {}
+
+        throw error;
+    } finally {
+        client.release();
+    }
 }
 
 module.exports = {
