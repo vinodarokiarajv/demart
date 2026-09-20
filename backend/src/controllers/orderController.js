@@ -21,7 +21,7 @@ async function createOrder(req, res) {
             });
         }
 
-        const result = await orderService.createOrder(
+        createdOrder = await orderService.createOrder(
             userId,
             items,
             shippingAddress,
@@ -29,31 +29,28 @@ async function createOrder(req, res) {
             paymentMethod
         );
 
-        createdOrder = result.order;
-
-        const idempotencyKey = `demart-order-${createdOrder.id}`;
+        const idempotencyKey =
+            `demart-order-${createdOrder.order.id}`;
 
         const paymentResult =
-            await paymentService.createCheckoutSession({
-                order: createdOrder,
-                items: result.items,
-                customerEmail,
+            await paymentService.createCheckoutSession(
+                createdOrder.order,
+                createdOrder.items,
                 idempotencyKey
-            });
+            );
 
         return res.status(201).json({
-            message: "Checkout session created",
-            order: createdOrder,
-            items: result.items,
+            order: createdOrder.order,
+            items: createdOrder.items,
             payment: paymentResult
         });
     } catch (error) {
         console.error("Create order error:", error);
 
-        if (createdOrder && createdOrder.id) {
+        if (createdOrder && createdOrder.order && createdOrder.order.id) {
             try {
                 await orderService.updateOrderStatus(
-                    createdOrder.id,
+                    createdOrder.order.id,
                     "CANCELLED"
                 );
             } catch (cleanupError) {
@@ -64,8 +61,14 @@ async function createOrder(req, res) {
             }
         }
 
-        return res.status(400).json({
-            message: error.message
+        if (error.statusCode) {
+            return res.status(error.statusCode).json({
+                message: error.message
+            });
+        }
+
+        return res.status(500).json({
+            message: "Unable to create order"
         });
     }
 }
@@ -113,7 +116,13 @@ async function getOrderById(req, res) {
     } catch (error) {
         console.error("Get order error:", error);
 
-        res.status(500).json({
+        if (error.statusCode) {
+            return res.status(error.statusCode).json({
+                message: error.message
+            });
+        }
+
+        return res.status(500).json({
             message: "Failed to retrieve order"
         });
     }

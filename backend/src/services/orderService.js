@@ -1,4 +1,5 @@
 const pool = require("../db/db");
+const AppError = require("../utils/appError");
 
 const orderRepository = require("../repositories/orderRepository");
 const productRepository = require("../repositories/productRepository");
@@ -29,15 +30,15 @@ async function createOrder(
     paymentMethod
 ) {
     if (!userId) {
-        throw new Error("User ID is required");
+        throw new AppError("User ID is required", 400);
     }
 
     if (!Array.isArray(items) || items.length === 0) {
-        throw new Error("Order must contain at least one item");
+        throw new AppError("Order must contain at least one item", 400);
     }
 
     if (!shippingAddress || typeof shippingAddress !== "object") {
-        throw new Error("Shipping address is required");
+        throw new AppError("Shipping address is required", 400);
     }
 
     const {
@@ -55,15 +56,15 @@ async function createOrder(
         !city ||
         !country
     ) {
-        throw new Error("Complete shipping address is required");
+        throw new AppError("Complete shipping address is required", 400);
     }
 
     if (!ALLOWED_DELIVERY_METHODS.includes(deliveryMethod)) {
-        throw new Error("Invalid delivery method");
+        throw new AppError("Invalid delivery method", 400);
     }
 
     if (!ALLOWED_PAYMENT_METHODS.includes(paymentMethod)) {
-        throw new Error("Invalid payment method");
+        throw new AppError("Invalid payment method", 400);
     }
 
     const mergedItems = new Map();
@@ -77,7 +78,7 @@ async function createOrder(
             !Number.isInteger(quantity) ||
             quantity <= 0
         ) {
-            throw new Error("Invalid product or quantity");
+            throw new AppError("Invalid product or quantity", 400);
         }
 
         const normalizedProductId = Number(productId);
@@ -115,14 +116,16 @@ async function createOrder(
                 await productRepository.findProductById(productId);
 
             if (!product) {
-                throw new Error(
-                    `Product ${productId} not found or inactive`
+                throw new AppError(
+                    `Product ${productId} not found or inactive`,
+                404
                 );
             }
 
             if (product.stock_quantity < quantity) {
-                throw new Error(
-                    `Insufficient stock for product: ${product.name}`
+                throw new AppError(
+                    `Insufficient stock for product: ${product.name}`,
+                    409
                 );
             }
 
@@ -197,10 +200,9 @@ async function createOrder(
 
             if (!reservation) {
 
-                throw new Error(
-
-                    `Insufficient stock for product ID: ${item.productId}`
-
+                throw new AppError(
+                    `Insufficient stock for product ID: ${item.productId}`,
+                    409
                 );
 
             }
@@ -239,7 +241,7 @@ async function createOrder(
 
 async function getOrdersByUserId(userId) {
     if (!userId) {
-        throw new Error("User ID is required");
+        throw new AppError("User ID is required", 400);
     }
 
     return await orderRepository.findOrdersByUserId(userId);
@@ -247,11 +249,11 @@ async function getOrdersByUserId(userId) {
 
 async function getOrderById(orderId, userId) {
     if (!orderId) {
-        throw new Error("Order ID is required");
+        throw new AppError("Order ID is required", 400);
     }
 
     if (!userId) {
-        throw new Error("User ID is required");
+        throw new AppError("User ID is required", 400);
     }
 
     const order =
@@ -261,7 +263,7 @@ async function getOrderById(orderId, userId) {
         );
 
     if (!order) {
-        throw new Error("Order not found");
+        throw new AppError("Order not found", 404);
     }
 
     const items =
@@ -277,11 +279,11 @@ async function getOrderById(orderId, userId) {
 
 async function updateOrderStatus(orderId, newStatus) {
     if (!orderId) {
-        throw new Error("Order ID is required");
+        throw new AppError("Order ID is required", 400);
     }
 
     if (!newStatus) {
-        throw new Error("Order status is required");
+        throw new AppError("Order status is required", 400);
     }
 
     const allowedStatuses = [
@@ -294,14 +296,14 @@ async function updateOrderStatus(orderId, newStatus) {
     ];
 
     if (!allowedStatuses.includes(newStatus)) {
-        throw new Error("Invalid order status");
+        throw new AppError("Invalid order status", 400);
     }
 
     const order =
         await orderRepository.findOrderById(orderId);
 
     if (!order) {
-        throw new Error("Order not found");
+        throw new AppError("Order not found", 404);
     }
 
     const allowedTransitions = {
@@ -334,8 +336,9 @@ async function updateOrderStatus(orderId, newStatus) {
         !allowedTransitions[currentStatus]
             .includes(newStatus)
     ) {
-        throw new Error(
-            `Invalid status transition: ${currentStatus} -> ${newStatus}`
+        throw new AppError(
+            `Invalid status transition: ${currentStatus} -> ${newStatus}`,
+            409
         );
     }
 
