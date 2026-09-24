@@ -16,31 +16,96 @@
 
         <header class="site-header">
 
-        <a href="home.html" class="brand-link">
+        <a
+            href="home.html"
+            class="brand-link"
+            id="site-brand"
+            data-testid="site-brand"
+        >
             <span class="brand">DeMart</span>
         </a>
 
         <nav class="main-nav">
 
-            <a href="home.html">Home</a>
+            <a
+                href="home.html"
+                id="home-link"
+                data-testid="home-link"
+            >
+                Home
+            </a>
 
-            <a href="products.html">Products</a>
+            <a
+                href="products.html"
+                id="products-link"
+                data-testid="products-link"
+            >
+                Products
+            </a>
 
-            <a href="login.html" id="login-link">Login</a>
+            <a
+                href="login.html"
+                id="login-link"
+                data-testid="login-link"
+            >
+                Login
+            </a>
 
-            <a href="register.html" id="register-link">Register</a>
+            <a
+                href="register.html"
+                id="register-link"
+                data-testid="register-link"
+            >
+                Register
+            </a>
 
-            <a href="account.html" id="account-link">Account</a>
+            <a
+                href="account.html"
+                id="account-link"
+                data-testid="account-link"
+            >
+                Account
+            </a>
 
-            <a href="orders.html" id="orders-link">My Orders</a>
+            <a
+                href="orders.html"
+                id="orders-link"
+                data-testid="orders-link"
+            >
+                My Orders
+            </a>
 
-            <a href="cart.html">Cart</a>
+            <a
+                href="cart.html"
+                id="cart-link"
+                data-testid="cart-link"
+            >
+                Cart
+            </a>
 
-            <a href="admin-users.html" id="admin-users-link">Manage Users</a>
+            <a
+                href="admin-users.html"
+                id="admin-users-link"
+                data-testid="admin-users-link"
+            >
+                Manage Users
+            </a>
 
-            <a href="admin-orders.html" id="admin-orders-link">Manage Orders</a>
+            <a
+                href="admin-orders.html"
+                id="admin-orders-link"
+                data-testid="admin-orders-link"
+            >
+                Manage Orders
+            </a>
 
-            <a href="#" id="logout-link">Logout</a>
+            <a
+                href="#"
+                id="logout-link"
+                data-testid="logout-link"
+            >
+                Logout
+            </a>
 
         </nav>
 
@@ -50,45 +115,72 @@
 
         <section class="hero">
             <h2>Welcome to DeMart</h2>
+
             <p>
                 Discover products, explore categories, and find
                 everything you need in one place.
             </p>
-            <a href="products.html">Start Shopping</a>
+
+            <a
+                href="products.html"
+                id="start-shopping"
+                data-testid="start-shopping"
+            >
+                Start Shopping
+            </a>
         </section>
 
         <section class="featured-categories">
 
-    <h2>Featured Categories</h2>
+            <h2>Featured Categories</h2>
 
-    <div class="category-container">
+            <div
+                class="category-container"
+                data-testid="category-container"
+            >
 
-        <article class="category-card">
-            <h3>Electronics</h3>
-            <p>Discover the latest electronic products.</p>
-        </article>
+                <article
+                    class="category-card"
+                    data-testid="category-card"
+                    data-category="electronics"
+                >
+                    <h3>Electronics</h3>
+                    <p>Discover the latest electronic products.</p>
+                </article>
 
-        <article class="category-card">
-            <h3>Fashion</h3>
-            <p>Explore clothing and accessories.</p>
-        </article>
+                <article
+                    class="category-card"
+                    data-testid="category-card"
+                    data-category="fashion"
+                >
+                    <h3>Fashion</h3>
+                    <p>Explore clothing and accessories.</p>
+                </article>
 
-        <article class="category-card">
-            <h3>Home &amp; Living</h3>
-            <p>Products to make your home better.</p>
-        </article>
+                <article
+                    class="category-card"
+                    data-testid="category-card"
+                    data-category="home-living"
+                >
+                    <h3>Home &amp; Living</h3>
+                    <p>Products to make your home better.</p>
+                </article>
 
-    </div>
+            </div>
 
-</section>
+        </section>
 
-<section class="featured-products">
+        <section class="featured-products">
 
-    <h2>Featured Products</h2>
+            <h2>Featured Products</h2>
 
-    <div class="featured-product-container"></div>
+            <div
+                class="featured-product-container"
+                id="featured-products"
+                data-testid="featured-products"
+            ></div>
 
-</section>
+        </section>
 
     </main>
 

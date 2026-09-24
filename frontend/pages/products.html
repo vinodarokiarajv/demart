@@ -58,20 +58,27 @@
     <div class="product-search-wrapper">
 
         <input
+            id="product-search"
             type="search"
             placeholder="Search products..."
             aria-label="Search products"
             autocomplete="off"
+            data-testid="product-search"
         >
 
         <div
             class="product-suggestions"
             aria-label="Product suggestions"
+            data-testid="product-suggestions"
         ></div>
 
     </div>
 
-    <select aria-label="Filter by category">
+    <select
+        id="product-category-filter"
+        aria-label="Filter by category"
+        data-testid="product-category-filter"
+    >
     <option value="">All Categories</option>
     <option value="Laptops">Laptops</option>
     <option value="Audio">Audio</option>
@@ -80,7 +87,11 @@
     <option value="Monitors">Monitors</option>
 </select>
 
-                <select aria-label="Sort products">
+                <select
+                    id="product-sort"
+                    aria-label="Sort products"
+                    data-testid="product-sort"
+                >
                     <option value="">Sort By</option>
                     <option value="price-low">Price: Low to High</option>
                     <option value="price-high">Price: High to Low</option>
@@ -90,7 +101,10 @@
             </div>
 
 
-            <div class="product-container">            
+            <div
+                class="product-container"
+                data-testid="product-container"
+            >
             </div>
 
         </section>

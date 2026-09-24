@@ -12,31 +12,31 @@
 
         <header class="site-header">
 
-        <a href="home.html" class="brand-link">
+        <a href="home.html" class="brand-link" data-testid="site-brand">
             <span class="brand">DeMart</span>
         </a>
 
         <nav class="main-nav">
 
-            <a href="home.html">Home</a>
+            <a href="home.html" data-testid="home-link">Home</a>
 
-            <a href="products.html">Products</a>
+            <a href="products.html" data-testid="products-link">Products</a>
 
-            <a href="login.html" id="login-link">Login</a>
+            <a href="login.html" id="login-link" data-testid="login-link">Login</a>
 
-            <a href="register.html" id="register-link">Register</a>
+            <a href="register.html" id="register-link" data-testid="register-link">Register</a>
 
-            <a href="account.html" id="account-link">Account</a>
+            <a href="account.html" id="account-link" data-testid="account-link">Account</a>
 
-            <a href="orders.html" id="orders-link">My Orders</a>
+            <a href="orders.html" id="orders-link" data-testid="orders-link">My Orders</a>
 
-            <a href="cart.html">Cart</a>
+            <a href="cart.html" data-testid="cart-link">Cart</a>
 
-            <a href="admin-users.html" id="admin-users-link">Manage Users</a>
+            <a href="admin-users.html" id="admin-users-link" data-testid="admin-users-link">Manage Users</a>
 
-            <a href="admin-orders.html" id="admin-orders-link">Manage Orders</a>
+            <a href="admin-orders.html" id="admin-orders-link" data-testid="admin-orders-link">Manage Orders</a>
 
-            <a href="#" id="logout-link">Logout</a>
+            <a href="#" id="logout-link" data-testid="logout-link">Logout</a>
 
         </nav>
 
@@ -51,7 +51,7 @@
     </div>
 
     <section class="order-confirmation-card">
-        <div id="order-details">
+        <div id="order-details" data-testid="order-details">
             <p class="order-loading">Loading order details...</p>
         </div>
     </section>

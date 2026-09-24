@@ -33,11 +33,12 @@ async function createOrder(req, res) {
             `demart-order-${createdOrder.order.id}`;
 
         const paymentResult =
-            await paymentService.createCheckoutSession(
-                createdOrder.order,
-                createdOrder.items,
-                idempotencyKey
-            );
+    await paymentService.createCheckoutSession({
+        order: createdOrder.order,
+        items: createdOrder.items,
+        customerEmail,
+        idempotencyKey
+    });
 
         return res.status(201).json({
             order: createdOrder.order,

@@ -186,7 +186,7 @@ async function loadAdminOrders() {
 
         adminOrdersTableBody.innerHTML = `
             <tr>
-                <td colspan="6" class="admin-orders-empty">
+                <td colspan="6" class="admin-orders-empty" data-testid="admin-orders-error">
                     <strong>Unable to load orders</strong>
                     <span>
                         ${error.message}
@@ -195,6 +195,7 @@ async function loadAdminOrders() {
                         type="button"
                         class="admin-orders-retry-button"
                         id="admin-orders-retry-button"
+                        data-testid="admin-orders-retry"
                     >
                         Retry
                     </button>
@@ -227,7 +228,7 @@ function renderAdminOrders(orders) {
 
         adminOrdersTableBody.innerHTML = `
             <tr>
-                <td colspan="6" class="admin-orders-empty">
+                <td colspan="6" class="admin-orders-empty" data-testid="admin-orders-empty">
                     <strong>No orders yet</strong>
                     <span>
                         Customer orders will appear here
@@ -246,6 +247,9 @@ function renderAdminOrders(orders) {
 
         const row =
             document.createElement("tr");
+
+        row.setAttribute("data-testid", "admin-order-row");
+        row.setAttribute("data-order-id", order.id);
 
         const availableStatuses =
             getAvailableStatuses(order.status);
@@ -269,33 +273,36 @@ function renderAdminOrders(orders) {
         row.innerHTML = `
 
             <td>
-                <strong>#${order.id}</strong>
+                <strong data-testid="admin-order-number">
+                    #${order.id}
+                </strong>
             </td>
 
             <td>
                 <div class="admin-order-customer">
-                    <strong>
+                    <strong data-testid="admin-order-customer-name">
                         ${order.customer_name}
                     </strong>
-
-                    <span>
+                    <span data-testid="admin-order-customer-email">
                         ${order.customer_email}
                     </span>
                 </div>
             </td>
 
-            <td>
+            <td data-testid="admin-order-date">
                 ${formatOrderDate(order.created_at)}
             </td>
 
             <td>
-                <strong>
+                <strong data-testid="admin-order-total">
                     ${formatCurrency(order.total_amount)}
                 </strong>
             </td>
 
             <td>
-                <span class="${getStatusClass(order.status)}">
+                <span
+                    class="${getStatusClass(order.status)}"
+                    data-testid="admin-order-status">
                     ${order.status}
                 </span>
             </td>
@@ -309,6 +316,7 @@ function renderAdminOrders(orders) {
 
                             <select
                                 class="admin-order-status-select"
+                                data-testid="admin-order-status-select"
                                 data-order-id="${order.id}"
                             >
                                 ${statusOptions}
@@ -317,6 +325,7 @@ function renderAdminOrders(orders) {
                             <button
                                 type="button"
                                 class="admin-order-update-button"
+                                data-testid="admin-order-update"
                                 data-order-id="${order.id}"
                                 data-current-status="${order.status}"
                             >
@@ -326,7 +335,9 @@ function renderAdminOrders(orders) {
                         </div>
                     `
                     : `
-                        <span class="admin-order-terminal">
+                        <span
+                            class="admin-order-terminal"
+                            data-testid="admin-order-terminal">
                             No further action
                         </span>
                     `

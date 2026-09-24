@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Create Account - DeMart</title>
+    <title>DeMart — Create Account</title>
 
     <link rel="icon" type="image/png" href="../assets/icons/demart-icon.png">
 
@@ -26,7 +26,13 @@
 
             <a href="products.html">Products</a>
 
-            <a href="login.html" id="login-link">Login</a>
+            <a
+                href="login.html"
+                id="sign-in-link"
+                data-testid="sign-in-link"
+            >
+                Sign In
+            </a>
 
             <a href="register.html" id="register-link">Register</a>
 
@@ -60,7 +66,11 @@
                 </p>
 
 
-                <form id="register-form" class="auth-form">
+                <form
+                    id="register-form"
+                    class="auth-form"
+                    data-testid="register-form"
+                >
 
     <div class="form-group">
         <label for="register-first-name">
@@ -68,6 +78,8 @@
         </label>
         <input
             id="register-first-name"
+            name="firstName"
+            data-testid="register-first-name"
             type="text"
             placeholder="Enter your first name"
             autocomplete="given-name"
@@ -81,9 +93,11 @@
         </label>
         <input
             id="register-last-name"
+            name="lastName"
+            data-testid="register-last-name"
             type="text"
             placeholder="Enter your last name"
-            autocomplete="family-name"
+            autocomplete="surname"
             required
         >
     </div>
@@ -94,6 +108,8 @@
         </label>
         <input
             id="register-email"
+            name="email"
+            data-testid="register-email"
             type="email"
             placeholder="you@example.com"
             autocomplete="email"
@@ -107,6 +123,8 @@
         </label>
         <input
             id="register-password"
+            name="password"
+            data-testid="register-password"
             type="password"
             placeholder="Enter your password"
             autocomplete="new-password"
@@ -115,11 +133,13 @@
     </div>
 
     <div class="form-group">
-        <label for="confirm-password">
+        <label for="register-confirm-password">
             Confirm Password
         </label>
         <input
-            id="confirm-password"
+            id="register-confirm-password"
+            name="confirmPassword"
+            data-testid="register-confirm-password"
             type="password"
             placeholder="Confirm your password"
             autocomplete="new-password"
@@ -133,6 +153,8 @@
         </label>
         <input
             id="register-street"
+            name="street"
+            data-testid="register-street"
             type="text"
             placeholder="Enter your street address"
             autocomplete="street-address"
@@ -146,6 +168,8 @@
         </label>
         <input
             id="register-postal-code"
+            name="postalCode"
+            data-testid="register-postal-code"
             type="text"
             placeholder="Enter your postal code"
             autocomplete="postal-code"
@@ -159,6 +183,8 @@
         </label>
         <input
             id="register-city"
+            name="city"
+            data-testid="register-city"
             type="text"
             placeholder="Enter your city"
             autocomplete="address-level2"
@@ -172,6 +198,8 @@
         </label>
         <input
             id="register-country"
+            name="country"
+            data-testid="register-country"
             autocomplete="country-name"
             type="text"
             placeholder="Enter your country"
@@ -185,24 +213,43 @@
             <input
                 type="checkbox"
                 id="register-terms"
+                name="terms"
+                data-testid="register-terms"
                 required
             >
 
             <span>
                 I agree to the
-                <a href="terms.html" target="_blank" rel="noopener">
+                <a
+                    href="terms.html"
+                    target="_blank"
+                    rel="noopener"
+                    id="terms-link"
+                    data-testid="terms-link"
+                >
                     Terms &amp; Conditions
-                </a>.
+                </a>
             </span>
         </label>
 
     </div>
 
-    <button type="submit" class="auth-button">
-        Register
+    <button
+        type="submit"
+        class="auth-button"
+        id="register-submit"
+        data-testid="register-submit"
+    >
+        Create Account
     </button>
 
-    <p id="register-message" class="form-message"></p>
+    <p
+        id="register-message"
+        class="form-message"
+        data-testid="register-message"
+        role="status"
+        aria-live="polite"
+    ></p>
 
 </form>
 
@@ -215,8 +262,12 @@
 
                     Already have an account?
 
-                    <a href="login.html">
-                        Login
+                    <a
+                        href="login.html"
+                        id="auth-sign-in-link"
+                        data-testid="auth-sign-in-link"
+                    >
+                        Sign In
                     </a>
 
                 </p>
@@ -225,6 +276,8 @@
                 <a
                     href="products.html"
                     class="guest-link"
+                    id="continue-as-guest"
+                    data-testid="continue-as-guest"
                 >
                     Continue shopping as guest
                 </a>

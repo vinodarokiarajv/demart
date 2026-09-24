@@ -16,31 +16,22 @@
 
         <header class="site-header">
 
-        <a href="home.html" class="brand-link">
+        <a href="home.html" class="brand-link" data-testid="site-brand">
             <span class="brand">DeMart</span>
         </a>
 
         <nav class="main-nav">
 
-            <a href="home.html">Home</a>
-
-            <a href="products.html">Products</a>
-
-            <a href="login.html" id="login-link">Login</a>
-
-            <a href="register.html" id="register-link">Register</a>
-
-            <a href="account.html" id="account-link">Account</a>
-
-            <a href="orders.html" id="orders-link">My Orders</a>
-
-            <a href="cart.html">Cart</a>
-
-            <a href="admin-users.html" id="admin-users-link">Manage Users</a>
-
-            <a href="admin-orders.html" id="admin-orders-link">Manage Orders</a>
-
-            <a href="#" id="logout-link">Logout</a>
+            <a href="home.html" data-testid="home-link">Home</a>
+            <a href="products.html" data-testid="products-link">Products</a>
+            <a href="login.html" id="login-link" data-testid="login-link">Login</a>
+            <a href="register.html" id="register-link" data-testid="register-link">Register</a>
+            <a href="account.html" id="account-link" data-testid="account-link">Account</a>
+            <a href="orders.html" id="orders-link" data-testid="orders-link">My Orders</a>
+            <a href="cart.html" data-testid="cart-link">Cart</a>
+            <a href="admin-users.html" id="admin-users-link" data-testid="admin-users-link">Manage Users</a>
+            <a href="admin-orders.html" id="admin-orders-link" data-testid="admin-orders-link">Manage Orders</a>
+            <a href="#" id="logout-link" data-testid="logout-link">Logout</a>
 
         </nav>
 
@@ -71,6 +62,7 @@
                                 id="email"
                                 type="email"
                                 placeholder="you@example.com"
+                                data-testid="checkout-email"
                             >
 
                         </div>
@@ -94,6 +86,7 @@
                                     id="first-name"
                                     type="text"
                                     placeholder="First name"
+                                    data-testid="checkout-first-name"
                                 >
 
                             </div>
@@ -108,6 +101,7 @@
                                     id="last-name"
                                     type="text"
                                     placeholder="Last name"
+                                    data-testid="checkout-last-name"
                                 >
 
                             </div>
@@ -125,6 +119,7 @@
                                 id="street"
                                 type="text"
                                 placeholder="Street and house number"
+                                data-testid="checkout-street"
                             >
 
                         </div>
@@ -142,6 +137,7 @@
                                     id="postal-code"
                                     type="text"
                                     placeholder="Postal code"
+                                    data-testid="checkout-postal-code"
                                 >
 
                             </div>
@@ -156,6 +152,7 @@
                                     id="city"
                                     type="text"
                                     placeholder="City"
+                                    data-testid="checkout-city"
                                 >
 
                             </div>
@@ -175,6 +172,7 @@
                                 placeholder="Enter your country"
                                 autocomplete="country-name"
                                 required
+                                data-testid="checkout-country"
                             >
 
                         </div>
@@ -194,6 +192,7 @@
                                 name="delivery"
                                 value="standard"
                                 checked
+                                data-testid="standard-delivery"
                             >
 
                             <label for="standard-delivery">
@@ -216,6 +215,7 @@
                                 type="radio"
                                 name="delivery"
                                 value="express"
+                                data-testid="express-delivery"
                             >
 
                             <label for="express-delivery">
@@ -245,6 +245,7 @@
                                 name="payment"
                                 value="card"
                                 checked
+                                data-testid="card-payment"
                             >
 
                             <label for="card-payment">
@@ -262,6 +263,7 @@
                                 name="payment"
                                 value="paypal"
                                 disabled
+                                data-testid="paypal-payment"
                             >
 
                             <label for="paypal-payment">
@@ -275,12 +277,13 @@
 
 
                     <button
-    type="button"
-    id="place-order-button"
-    class="place-order-button"
->
-    Place Order
-</button>
+                        type="button"
+                        id="place-order-button"
+                        class="place-order-button"
+                        data-testid="place-order"
+                    >
+                        Place Order
+                    </button>
 
                 </div>
 
@@ -289,14 +292,14 @@
 
     <h3>Order Summary</h3>
 
-    <div id="checkout-products">
+    <div id="checkout-products" data-testid="checkout-products">
         <!-- Cart products will be loaded dynamically -->
     </div>
 
     <div class="summary-row">
 
         <span>Subtotal</span>
-        <span id="checkout-subtotal">€0.00</span>
+        <span id="checkout-subtotal" data-testid="checkout-subtotal">€0.00</span>
 
     </div>
 
@@ -304,7 +307,7 @@
     <div class="summary-row">
 
         <span>Shipping</span>
-        <span id="checkout-shipping">€0.00</span>
+        <span id="checkout-shipping" data-testid="checkout-shipping">€0.00</span>
 
     </div>
 
@@ -312,7 +315,7 @@
     <div class="summary-row checkout-total">
 
         <strong>Total</strong>
-        <strong id="checkout-total">€0.00</strong>
+        <strong id="checkout-total" data-testid="checkout-total">€0.00</strong>
 
     </div>
 

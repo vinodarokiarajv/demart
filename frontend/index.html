@@ -23,17 +23,42 @@
 
         <header class="site-header landing-site-header">
 
-        <a href="index.html" class="brand-link">
-            <span class="brand">DeMart</span>
-        </a>
+        <a
+    href="index.html"
+    class="brand-link"
+    id="site-brand"
+    data-testid="site-brand"
+>
+    <span class="brand">DeMart</span>
+</a>
 
-        <nav class="main-nav landing-nav">
+<nav class="main-nav landing-nav">
 
-            <a href="pages/login.html">Login</a>
+    <a
+        href="pages/home.html"
+        id="guest-nav-link"
+        data-testid="guest-nav-link"
+    >
+        Continue as Guest
+    </a>
 
-            <a href="pages/register.html">Register</a>
+    <a
+        href="pages/login.html"
+        id="login-nav-link"
+        data-testid="login-nav-link"
+    >
+        Sign In
+    </a>
 
-        </nav>
+    <a
+        href="pages/register.html"
+        id="register-nav-link"
+        data-testid="register-nav-link"
+    >
+        Create Account
+    </a>
+
+</nav>
 
     </header>
 
@@ -62,18 +87,22 @@
                 <div class="hero-actions">
 
     <a
-        href="pages/products.html"
-        class="hero-primary-button"
-    >
-        Explore Products
-    </a>
+    href="pages/products.html"
+    class="hero-primary-button"
+    id="explore-products"
+    data-testid="explore-products"
+>
+    Explore Products
+</a>
 
-    <a
-        href="pages/home.html#categories"
-        class="hero-secondary-button"
-    >
-        View Categories
-    </a>
+<a
+    href="pages/home.html#categories"
+    class="hero-secondary-button"
+    id="view-categories"
+    data-testid="view-categories"
+>
+    View Categories
+</a>
 
 </div>
 
@@ -98,11 +127,13 @@
                     </p>
 
                     <a
-                        href="pages/products.html"
-                        class="landing-secondary-link"
-                    >
-                        Browse Products →
-                    </a>
+    href="pages/products.html"
+    class="landing-secondary-link"
+    id="browse-products"
+    data-testid="browse-products"
+>
+    Browse Products →
+</a>
 
                 </div>
 
@@ -182,6 +213,8 @@
                 <a
                     href="pages/products.html"
                     class="landing-category-card"
+                    data-testid="category-card"
+                    data-category="electronics"
                 >
                     <h3>Electronics</h3>
                     <p>
@@ -192,6 +225,8 @@
                 <a
                     href="pages/products.html"
                     class="landing-category-card"
+                    data-testid="category-card"
+                    data-category="accessories"
                 >
                     <h3>Accessories</h3>
                     <p>
@@ -202,6 +237,8 @@
                 <a
                     href="pages/products.html"
                     class="landing-category-card"
+                    data-testid="category-card"
+                    data-category="home-living"
                 >
                     <h3>Home &amp; Living</h3>
                     <p>
@@ -227,6 +264,8 @@
             <a
                 href="pages/home.html"
                 class="account-button"
+                id="start-shopping"
+                data-testid="start-shopping"
             >
                 Start Shopping
             </a>

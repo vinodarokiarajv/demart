@@ -17,97 +17,91 @@
 
 <body>
 
-        <header class="site-header">
+        <header class="site-header" data-testid="site-header">
 
-        <a href="home.html" class="brand-link">
+        <a href="home.html" class="brand-link" data-testid="site-brand">
             <span class="brand">DeMart</span>
         </a>
 
         <nav class="main-nav">
 
-            <a href="home.html">Home</a>
-
-            <a href="products.html">Products</a>
-
-            <a href="login.html" id="login-link">Login</a>
-
-            <a href="register.html" id="register-link">Register</a>
-
-            <a href="account.html" id="account-link">Account</a>
-
-            <a href="orders.html" id="orders-link">My Orders</a>
-
-            <a href="cart.html">Cart</a>
-
-            <a href="admin-users.html" id="admin-users-link">Manage Users</a>
-
-            <a href="admin-orders.html" id="admin-orders-link">Manage Orders</a>
-
-            <a href="#" id="logout-link">Logout</a>
+            <a href="home.html" data-testid="home-link">Home</a>
+            <a href="products.html" data-testid="products-link">Products</a>
+            <a href="login.html" id="login-link" data-testid="login-link">Login</a>
+            <a href="register.html" id="register-link" data-testid="register-link">Register</a>
+            <a href="account.html" id="account-link" data-testid="account-link">Account</a>
+            <a href="orders.html" id="orders-link" data-testid="orders-link">My Orders</a>
+            <a href="cart.html" data-testid="cart-link">Cart</a>
+            <a href="admin-users.html" id="admin-users-link" data-testid="admin-users-link">Manage Users</a>
+            <a href="admin-orders.html" id="admin-orders-link" data-testid="admin-orders-link">Manage Orders</a>
+            <a href="#" id="logout-link" data-testid="logout-link">Logout</a>
 
         </nav>
 
     </header>
 
-    <main class="account-container">
+    <main class="account-container" data-testid="account-page">
 
-        <h1>My Account</h1>
+        <h1 data-testid="account-title">My Account</h1>
 
-        <section class="account-card">
-
+        <section class="account-card" data-testid="personal-information">
             <h2>Personal Information</h2>
 
             <div class="account-info">
-
                 <p>
                     <strong>Name:</strong>
-                    <span id="account-name"></span>
+                    <span id="account-name" data-testid="account-name"></span>
                 </p>
 
                 <p>
                     <strong>Email:</strong>
-                    <span id="account-email"></span>
+                    <span id="account-email" data-testid="account-email"></span>
                 </p>
 
                 <p>
                     <strong>Member Since:</strong>
-                    <span id="account-created"></span>
+                    <span id="account-created" data-testid="account-created"></span>
                 </p>
-
             </div>
-
         </section>
 
-        <section class="account-card">
-
+        <section class="account-card" data-testid="account-orders">
             <h2>Orders</h2>
-
             <p>View your previous orders.</p>
 
-            <a href="orders.html" class="account-button">
+            <a
+                href="orders.html"
+                class="account-button"
+                data-testid="view-my-orders">
                 View My Orders
             </a>
-
         </section>
 
-        <section class="account-card account-danger-zone">
-    <h2>Delete Account</h2>
+        <section
+            class="account-card account-danger-zone"
+            data-testid="delete-account-section">
 
-    <p>
-        Deleting your account will permanently remove your personal
-        account information. Your completed order history may be
-        retained for business and legal purposes.
-    </p>
+            <h2>Delete Account</h2>
 
-    <button
-        type="button"
-        id="delete-account-button"
-        class="account-button account-delete-button">
-        Delete My Account
-    </button>
+            <p>
+                Deleting your account will permanently remove your personal
+                account information. Your completed order history may be
+                retained for business and legal purposes.
+            </p>
 
-    <p id="delete-account-message"></p>
-</section>
+            <button
+                type="button"
+                id="delete-account-button"
+                class="account-button account-delete-button"
+                data-testid="delete-account-button">
+                Delete My Account
+            </button>
+
+            <p
+                id="delete-account-message"
+                data-testid="delete-account-message">
+            </p>
+        </section>
 
     </main>
 

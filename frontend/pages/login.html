@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Login - DeMart</title>
+    <title>DeMart — Sign In</title>
 
     <link rel="icon" type="image/png" href="../assets/icons/demart-icon.png">
 
@@ -16,31 +16,96 @@
 
         <header class="site-header">
 
-        <a href="home.html" class="brand-link">
+        <a
+            href="home.html"
+            class="brand-link"
+            id="site-brand"
+            data-testid="site-brand"
+        >
             <span class="brand">DeMart</span>
         </a>
 
         <nav class="main-nav">
 
-            <a href="home.html">Home</a>
+            <a
+                href="home.html"
+                id="home-link"
+                data-testid="home-link"
+            >
+                Home
+            </a>
 
-            <a href="products.html">Products</a>
+            <a
+                href="products.html"
+                id="products-link"
+                data-testid="products-link"
+            >
+                Products
+            </a>
 
-            <a href="login.html" id="login-link">Login</a>
+            <a
+                href="login.html"
+                id="login-link"
+                data-testid="login-link"
+            >
+                Sign In
+            </a>
 
-            <a href="register.html" id="register-link">Register</a>
+            <a
+                href="register.html"
+                id="register-link"
+                data-testid="register-link"
+            >
+                Create Account
+            </a>
 
-            <a href="account.html" id="account-link">Account</a>
+            <a
+                href="account.html"
+                id="account-link"
+                data-testid="account-link"
+            >
+                My Account
+            </a>
 
-            <a href="orders.html" id="orders-link">My Orders</a>
+            <a
+                href="orders.html"
+                id="orders-link"
+                data-testid="orders-link"
+            >
+                My Orders
+            </a>
 
-            <a href="cart.html">Cart</a>
+            <a
+                href="cart.html"
+                id="cart-link"
+                data-testid="cart-link"
+            >
+                Cart
+            </a>
 
-            <a href="admin-users.html" id="admin-users-link">Manage Users</a>
+            <a
+                href="admin-users.html"
+                id="admin-users-link"
+                data-testid="admin-users-link"
+            >
+                Manage Users
+            </a>
 
-            <a href="admin-orders.html" id="admin-orders-link">Manage Orders</a>
+            <a
+                href="admin-orders.html"
+                id="admin-orders-link"
+                data-testid="admin-orders-link"
+            >
+                Manage Orders
+            </a>
 
-            <a href="#" id="logout-link">Logout</a>
+            <a
+                href="#"
+                id="logout-link"
+                data-testid="logout-link"
+            >
+                Sign Out
+            </a>
 
         </nav>
 
@@ -60,7 +125,11 @@
                 </p>
 
 
-                <form id="login-form" class="auth-form">
+                <form
+                    id="login-form"
+                    class="auth-form"
+                    data-testid="login-form"
+                >
 
                     <div class="form-group">
 
@@ -70,8 +139,11 @@
 
                         <input
                             id="login-email"
+                            name="email"
+                            data-testid="login-email"
                             type="email"
                             placeholder="you@example.com"
+                            autocomplete="email"
                             required
                         >
 
@@ -86,17 +158,21 @@
     <div class="password-input-wrapper">
         <input
             id="login-password"
+            name="password"
+            data-testid="login-password"
             type="password"
             placeholder="Enter your password"
+            autocomplete="current-password"
             required
         >
         <button
-    type="button"
-    class="password-toggle"
-    id="login-password-toggle"
-    aria-label="Show password"
-    aria-pressed="false"
->
+            type="button"
+            class="password-toggle"
+            id="login-password-toggle"
+            data-testid="login-password-toggle"
+            aria-label="Show password"
+            aria-pressed="false"
+        >
     <svg
         class="password-toggle-icon"
         viewBox="0 0 24 24"
@@ -120,13 +196,20 @@
                             <input
                                 type="checkbox"
                                 id="remember-me"
+                                name="rememberMe"
+                                data-testid="remember-me"
                             >
 
                             <span>Remember me</span>
 
                         </label>
 
-                        <a href="#" class="forgot-password">
+                        <a
+                            href="#"
+                            class="forgot-password"
+                            id="forgot-password"
+                            data-testid="forgot-password"
+                        >
                             Forgot password?
                         </a>
 
@@ -136,13 +219,21 @@
                     <button
                         type="submit"
                         class="auth-button"
+                        id="login-submit"
+                        data-testid="login-submit"
                     >
-                        Login
+                        Sign In
                     </button>
 
                 </form>
 
-                <p id="login-message"></p>
+                <p
+                    id="login-message"
+                    class="form-message"
+                    data-testid="login-message"
+                    role="status"
+                    aria-live="polite"
+                ></p>
 
                 <div class="auth-divider">
                     <span>OR</span>
@@ -153,7 +244,11 @@
 
                     Don't have an account?
 
-                    <a href="register.html">
+                    <a
+                        href="register.html"
+                        id="create-account-link"
+                        data-testid="create-account-link"
+                    >
                         Create an account
                     </a>
 
@@ -163,6 +258,8 @@
                 <a
                     href="products.html"
                     class="guest-link"
+                    id="continue-as-guest"
+                    data-testid="continue-as-guest"
                 >
                     Continue shopping as guest
                 </a>

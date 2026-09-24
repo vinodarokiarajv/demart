@@ -12,50 +12,38 @@
 
 <body>
 
-<header class="site-header">
+<header class="site-header" data-testid="site-header">
 
-    <a href="home.html" class="brand-link">
+    <a href="home.html" class="brand-link" data-testid="site-brand">
         <span class="brand">DeMart</span>
     </a>
 
     <nav class="main-nav">
-
-        <a href="home.html">Home</a>
-
-        <a href="products.html">Products</a>
-
-        <a href="login.html" id="login-link">Login</a>
-
-        <a href="register.html" id="register-link">Register</a>
-
-        <a href="account.html" id="account-link">Account</a>
-
-        <a href="orders.html" id="orders-link">My Orders</a>
-
-        <a href="cart.html">Cart</a>
-
-        <a href="admin-users.html" id="admin-users-link">
+        <a href="home.html" data-testid="home-link">Home</a>
+        <a href="products.html" data-testid="products-link">Products</a>
+        <a href="login.html" id="login-link" data-testid="login-link">Login</a>
+        <a href="register.html" id="register-link" data-testid="register-link">Register</a>
+        <a href="account.html" id="account-link" data-testid="account-link">Account</a>
+        <a href="orders.html" id="orders-link" data-testid="orders-link">My Orders</a>
+        <a href="cart.html" data-testid="cart-link">Cart</a>
+        <a href="admin-users.html" id="admin-users-link" data-testid="admin-users-link">
             Manage Users
         </a>
-
-        <a href="admin-orders.html" id="admin-orders-link">
+        <a href="admin-orders.html" id="admin-orders-link" data-testid="admin-orders-link">
             Manage Orders
         </a>
-
-        <a href="#" id="logout-link">Logout</a>
-
+        <a href="#" id="logout-link" data-testid="logout-link">Logout</a>
     </nav>
-
 </header>
 
-<main class="admin-orders-page">
+<main class="admin-orders-page" data-testid="admin-orders-page">
 
-    <header class="admin-orders-header">
+    <header class="admin-orders-header" data-testid="admin-orders-header">
 
         <div>
             <p class="admin-eyebrow">ADMINISTRATION</p>
 
-            <h1>Manage Orders</h1>
+            <h1 data-testid="admin-orders-title">Manage Orders</h1>
 
             <p>
                 Review customer orders and manage their fulfillment status.
@@ -68,7 +56,7 @@
                 TOTAL ORDERS
             </span>
 
-            <strong id="admin-orders-count">
+            <strong id="admin-orders-count" data-testid="admin-orders-count">
                 —
             </strong>
 
@@ -79,14 +67,19 @@
     <div
         id="admin-orders-message"
         class="admin-orders-message"
+        data-testid="admin-orders-message"
         hidden
     ></div>
 
-    <section class="admin-orders-container">
+    <section
+        class="admin-orders-container"
+        data-testid="admin-orders-container">
 
         <div class="admin-orders-table-wrapper">
 
-            <table class="admin-orders-table">
+            <table
+                class="admin-orders-table"
+                data-testid="admin-orders-table">
 
                 <thead>
                     <tr>
@@ -99,9 +92,14 @@
                     </tr>
                 </thead>
 
-                <tbody id="admin-orders-table-body">
+                <tbody
+                    id="admin-orders-table-body"
+                    data-testid="admin-orders-table-body">
                     <tr>
-                        <td colspan="6" class="admin-orders-loading">
+                        <td
+                            colspan="6"
+                            class="admin-orders-loading"
+                            data-testid="admin-orders-loading">
                             Loading orders...
                         </td>
                     </tr>

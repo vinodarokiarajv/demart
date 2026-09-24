@@ -18,53 +18,53 @@
 <body>
 
 ```
-    <header class="site-header">
+    <header class="site-header" data-testid="site-header">
 
-        <a href="home.html" class="brand-link">
+        <a href="home.html" class="brand-link" data-testid="site-brand">
             <span class="brand">DeMart</span>
         </a>
 
         <nav class="main-nav">
 
-            <a href="home.html">Home</a>
+            <a href="home.html" data-testid="home-link">Home</a>
 
-            <a href="products.html">Products</a>
+            <a href="products.html" data-testid="products-link">Products</a>
 
-            <a href="login.html" id="login-link">Login</a>
+            <a href="login.html" id="login-link" data-testid="login-link">Login</a>
 
-            <a href="register.html" id="register-link">Register</a>
+            <a href="register.html" id="register-link" data-testid="register-link">Register</a>
 
-            <a href="account.html" id="account-link">Account</a>
+            <a href="account.html" id="account-link" data-testid="account-link">Account</a>
 
-            <a href="orders.html" id="orders-link">My Orders</a>
+            <a href="orders.html" id="orders-link" data-testid="orders-link">My Orders</a>
 
-            <a href="cart.html">Cart</a>
+            <a href="cart.html" data-testid="cart-link">Cart</a>
 
-            <a href="admin-users.html" id="admin-users-link">Manage Users</a>
+            <a href="admin-users.html" id="admin-users-link" data-testid="admin-users-link">Manage Users</a>
 
-            <a href="admin-orders.html" id="admin-orders-link">Manage Orders</a>
+            <a href="admin-orders.html" id="admin-orders-link" data-testid="admin-orders-link">Manage Orders</a>
 
-            <a href="#" id="logout-link">Logout</a>
+            <a href="#" id="logout-link" data-testid="logout-link">Logout</a>
 
         </nav>
 
     </header>
 
 
-<main>
+<main data-testid="terms-page">
 
     <section class="legal-page">
 
-        <div class="legal-card">
+        <div class="legal-card" data-testid="terms-content">
 
-            <h2>Terms & Conditions</h2>
+            <h2 data-testid="terms-title">Terms & Conditions</h2>
 
-            <p class="legal-intro">
+            <p class="legal-intro" data-testid="terms-introduction">
                 Welcome to DeMart. These Terms & Conditions describe
                 the general rules for using the DeMart application.
             </p>
 
-            <p class="demo-notice">
+            <p class="demo-notice" data-testid="demo-notice">
                 <strong>Demo Project Notice:</strong>
                 DeMart is a portfolio and learning project.
                 These terms are provided for demonstration purposes
@@ -191,7 +191,7 @@
 
             <div class="legal-actions">
 
-                <a href="register.html" class="auth-button">
+                <a href="register.html" class="auth-button" data-testid="back-to-registration">
                     Back to Registration
                 </a>
 

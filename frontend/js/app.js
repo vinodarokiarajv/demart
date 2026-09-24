@@ -46,7 +46,7 @@ if (registerForm) {
             document.getElementById("register-password");
 
         const confirmPasswordInput =
-            document.getElementById("confirm-password");
+            document.getElementById("register-confirm-password");
 
         const streetInput =
             document.getElementById("register-street");
@@ -570,7 +570,10 @@ if (productContainer) {
         products.forEach(function (product) {
 
             const productCard = document.createElement("article");
-            productCard.className = "product-card";
+
+                productCard.className = "product-card";
+                productCard.setAttribute("data-testid", "product-card");
+                productCard.setAttribute("data-product-id", product.id);
 
             productCard.innerHTML = `
                 <div class="product-image">
@@ -582,29 +585,46 @@ if (productContainer) {
 
                 <div class="product-info">
 
-                    <p class="product-category">
+                    <p
+                        class="product-category"
+                        data-testid="product-category"
+                    >
                         ${product.category}
                     </p>
 
-                    <h3>${product.name}</h3>
+                    <h3
+                        data-testid="product-name"
+                    >
+                        ${product.name}
+                    </h3>
 
-                    <p class="product-price">
+                    <p
+                        class="product-price"
+                        data-testid="product-price"
+                    >
                         €${Number(product.price).toFixed(2)}
                     </p>
 
-                    <p class="product-rating">
+                    <p
+                        class="product-rating"
+                        data-testid="product-rating"
+                    >
                         ${product.rating} / 5
                     </p>
 
                     <div class="product-actions">
 
-                        <a href="product-details.html?id=${product.id}">
+                        <a
+                            href="product-details.html?id=${product.id}"
+                            data-testid="view-product-details"
+                        >
                             View Details
                         </a>
 
                         <button
                             type="button"
                             class="add-to-cart-button"
+                            data-testid="add-to-cart"
                         >
                             Add to Cart
                         </button>
@@ -836,7 +856,9 @@ if (featuredProductContainer) {
 
                 const productCard = document.createElement("article");
 
-                productCard.className = "product-card";
+                    productCard.className = "product-card";
+                    productCard.setAttribute("data-testid", "product-card");
+                    productCard.setAttribute("data-product-id", product.id);
 
                 productCard.innerHTML = `
                     <div class="product-image">
@@ -845,17 +867,27 @@ if (featuredProductContainer) {
 
                     <div class="product-info">
 
-                        <p class="product-category">
+                        <p
+                            class="product-category"
+                            data-testid="product-category"
+                        >
                             ${product.category}
                         </p>
 
-                        <h3>${product.name}</h3>
+                        <h3
+                            data-testid="product-name"
+                        >
+                            ${product.name}
+                        </h3>
 
                         <p class="product-price">
                             €${product.price}
                         </p>
 
-                        <p class="product-rating">
+                        <p
+                            class="product-rating"
+                            data-testid="product-rating"
+                        >
                             ${product.rating} / 5
                         </p>
 
@@ -868,6 +900,7 @@ if (featuredProductContainer) {
                             <button
                                 type="button"
                                 class="add-to-cart-button"
+                                data-testid="add-to-cart"
                             >
                                 Add to Cart
                             </button>
@@ -1024,7 +1057,7 @@ document.querySelector("#cart-total").textContent =
 if (cart.length === 0) {
 
     cartItemsContainer.innerHTML = `
-        <div class="empty-cart">
+        <div class="empty-cart" data-testid="empty-cart">
             <h3>Your cart is empty</h3>
             <p>
                 You haven't added any products to your cart yet.
@@ -1047,10 +1080,16 @@ cart.forEach(function (item) {
             const cartItem = document.createElement("article");
 
             cartItem.className = "cart-item";
+            cartItem.setAttribute("data-testid", "cart-item");
+            cartItem.setAttribute("data-product-id", item.id);
 
             cartItem.innerHTML = `
                 <div class="cart-item-image">
-                    <img src="${item.image_url}" alt="${item.name}">
+                    <img
+                        src="${item.image_url}"
+                        alt="${item.name}"
+                        data-testid="cart-item-image"
+                    >
                 </div>
 
                 <div class="cart-item-info">
@@ -1059,9 +1098,9 @@ cart.forEach(function (item) {
                         ${item.category}
                     </p>
 
-                    <h3>${item.name}</h3>
+                    <h3 data-testid="cart-item-name">${item.name}</h3>
 
-                    <p class="cart-item-price">
+                    <p class="cart-item-price" data-testid="cart-item-price">
                         €${item.price.toFixed(2)}
                     </p>
 
@@ -1079,19 +1118,24 @@ cart.forEach(function (item) {
     value="${item.quantity}"
     min="1"
     class="cart-quantity-input"
->
+                        data-testid="cart-item-quantity"
+                    >
 
                 </div>
 
                 <div class="cart-item-total">
 
-                    <p>
+                    <p data-testid="cart-item-total">
                         €${(item.price * item.quantity).toFixed(2)}
                     </p>
 
-                    <button type="button" class="remove-cart-item">
-    Remove
-</button>
+                    <button
+                        type="button"
+                        class="remove-cart-item"
+                        data-testid="remove-cart-item"
+                    >
+                        Remove
+                    </button>
 
                 </div>
             `;
@@ -1143,6 +1187,9 @@ quantityInput.addEventListener("change", function () {
 
 const checkoutPage =
     document.querySelector(".checkout-page");
+
+const placeOrderButton =
+    document.getElementById("place-order-button");
 
 if (checkoutPage) {
 
@@ -1287,6 +1334,7 @@ const checkoutProductsContainer =
     document.getElementById("checkout-products");
 
 
+
 if (checkoutProductsContainer && checkoutPage) {
 
     const standardDelivery =
@@ -1335,12 +1383,12 @@ if (checkoutProductsContainer && checkoutPage) {
         if (cart.length === 0) {
 
             checkoutProductsContainer.innerHTML = `
-                <div class="empty-cart">
+                <div class="empty-cart" data-testid="checkout-empty-cart">
                     <h3>Your cart is empty</h3>
                     <p>
                         Add some products before proceeding to checkout.
                     </p>
-                    <a href="products.html">
+                    <a href="products.html" data-testid="continue-shopping">
                         Continue Shopping
                     </a>
                 </div>
@@ -1375,13 +1423,23 @@ if (checkoutProductsContainer && checkoutPage) {
             checkoutProduct.className =
                 "checkout-product";
 
+                checkoutProduct.setAttribute(
+                    "data-testid",
+                    "checkout-product"
+                );
+
+                checkoutProduct.setAttribute(
+                    "data-product-id",
+                    item.id
+                );
+
             checkoutProduct.innerHTML = `
                 <div>
-                    <strong>${item.name}</strong>
-                    <span>Qty: ${item.quantity}</span>
+                    <strong data-testid="checkout-product-name">${item.name}</strong>
+                    <span data-testid="checkout-product-quantity">Qty: ${item.quantity}</span>
                 </div>
 
-                <span>
+                <span data-testid="checkout-product-total">
                     €${itemTotal.toFixed(2)}
                 </span>
             `;
@@ -1426,9 +1484,6 @@ if (checkoutProductsContainer && checkoutPage) {
     loadCheckout();
 }
 
-
-const placeOrderButton =
-    document.getElementById("place-order-button");
 
 if (placeOrderButton) {
 
@@ -1682,7 +1737,7 @@ if (orderDetailsContainer) {
         if (!orderId) {
 
             orderDetailsContainer.innerHTML = `
-                <div class="order-error">
+                <div class="order-error" data-testid="order-error">
 
                     <h3>Order Not Found</h3>
 
@@ -1692,7 +1747,8 @@ if (orderDetailsContainer) {
 
                     <a
                         href="orders.html"
-                        class="account-button">
+                        class="account-button"
+                        data-testid="view-my-orders">
                         Back to My Orders
                     </a>
 
@@ -1825,34 +1881,34 @@ if (orderDetailsContainer) {
                     Number(item.quantity);
 
                 itemsHtml += `
-                    <div class="order-item">
+                    <div class="order-item" data-testid="order-item" data-product-id="${item.product_id || ""}">
 
                         <div class="order-item-image">
 
                             <img
                                 src="${item.image_url}"
-                                alt="${item.product_name}">
+                                alt="${item.product_name}" data-testid="order-item-image">
 
                         </div>
 
                         <div class="order-item-info">
 
-                            <h3>
+                            <h3 data-testid="order-item-name">
                                 ${item.product_name}
                             </h3>
 
-                            <p>
+                            <p data-testid="order-item-quantity">
                                 Quantity: ${item.quantity}
                             </p>
 
-                            <p>
+                            <p data-testid="order-item-unit-price">
                                 €${Number(item.unit_price).toFixed(2)}
                                 each
                             </p>
 
                         </div>
 
-                        <div class="order-item-total">
+                        <div class="order-item-total" data-testid="order-item-total">
 
                             €${itemTotal.toFixed(2)}
 
@@ -1896,23 +1952,23 @@ if (orderDetailsContainer) {
 
             orderDetailsContainer.innerHTML = `
 
-                <div class="order-success-header">
+                <div class="order-success-header" data-testid="order-success-header">
 
-                    <h1>${pageTitle}</h1>
+                    <h1 data-testid="order-confirmation-title">${pageTitle}</h1>
 
-                    <p>
+                    <p data-testid="order-confirmation-message">
                         ${pageMessage}
                     </p>
 
                 </div>
 
-                <div class="order-summary">
+                <div class="order-summary" data-testid="order-summary">
 
                     <div class="order-summary-item">
 
                         <span>Order Number</span>
 
-                        <strong>
+                        <strong data-testid="order-number">
                             #${order.id}
                         </strong>
 
@@ -1922,7 +1978,7 @@ if (orderDetailsContainer) {
 
                         <span>Order Date</span>
 
-                        <strong>
+                        <strong data-testid="order-date">
                             ${formattedDate}
                         </strong>
 
@@ -1932,7 +1988,7 @@ if (orderDetailsContainer) {
 
                         <span>Status</span>
 
-                        <strong class="order-status ${statusClass}">
+                        <strong class="order-status ${statusClass}" data-testid="order-status">
                             ${order.status}
                         </strong>
 
@@ -1940,19 +1996,19 @@ if (orderDetailsContainer) {
 
                 </div>
 
-                <div class="order-info-grid">
+                <div class="order-info-grid" data-testid="order-info-grid">
 
                     <div class="order-info-section">
 
-                        <h2>Delivery</h2>
+                        <h2 data-testid="delivery-section">Delivery</h2>
 
                         <p>
-                            <strong>
+                            <strong data-testid="delivery-method">
                                 ${deliveryLabel}
                             </strong>
                         </p>
 
-                        <p>
+                        <p data-testid="delivery-estimate">
                             ${
                                 deliveryMethod === "express"
                                     ? "1–2 business days"
@@ -1964,17 +2020,17 @@ if (orderDetailsContainer) {
 
                     <div class="order-info-section">
 
-                        <h2>Payment</h2>
+                        <h2 data-testid="payment-section">Payment</h2>
 
                         <p>
-                            <strong>
+                            <strong data-testid="payment-method">
                                 ${paymentLabel}
                             </strong>
                         </p>
 
                         <p>
                             Status:
-                            <strong>
+                            <strong data-testid="payment-status">
                                 ${paymentStatusLabel}
                             </strong>
                         </p>
@@ -1985,7 +2041,7 @@ if (orderDetailsContainer) {
 
                 ${shippingAddress}
 
-                <div class="order-items">
+                <div class="order-items" data-testid="order-items">
 
                     <h2>Order Items</h2>
 
@@ -1993,13 +2049,13 @@ if (orderDetailsContainer) {
 
                 </div>
 
-                <div class="order-confirmation-breakdown">
+                <div class="order-confirmation-breakdown" data-testid="order-breakdown">
 
                     <div class="order-confirmation-total">
 
                         <span>Shipping</span>
 
-                        <span>
+                        <span data-testid="order-shipping">
                             ${
                                 shippingAmount === 0
                                     ? "Free"
@@ -2013,7 +2069,7 @@ if (orderDetailsContainer) {
 
                         <span>Total</span>
 
-                        <span>
+                        <span data-testid="order-total">
                             €${Number(order.total_amount).toFixed(2)}
                         </span>
 
@@ -2031,7 +2087,8 @@ if (orderDetailsContainer) {
 
                     <a
                         href="products.html"
-                        class="account-button">
+                        class="account-button"
+                        data-testid="continue-shopping">
                         Continue Shopping
                     </a>
 
@@ -2174,7 +2231,7 @@ if (ordersContainer) {
             if (orders.length === 0) {
 
                 ordersContainer.innerHTML = `
-                    <div class="orders-empty">
+                    <div class="orders-empty" data-testid="orders-empty">
 
                         <h2>No Orders Yet</h2>
 
@@ -2183,7 +2240,8 @@ if (ordersContainer) {
                         </p>
 
                         <a href="products.html"
-                           class="account-button">
+                           class="account-button"
+                           data-testid="start-shopping">
                             Start Shopping
                         </a>
 
@@ -2207,16 +2265,16 @@ if (ordersContainer) {
                     Number(order.total_amount).toFixed(2);
 
                 ordersHtml += `
-                    <article class="order-card">
+                    <article class="order-card" data-testid="order-card" data-order-id="${order.id}">
 
-                        <div class="order-card-header">
+                        <div class="order-card-header" data-testid="order-card-header">
 
                             <div>
-                                <h2>
+                                <h2 data-testid="order-number">
                                     Order #${order.id}
                                 </h2>
 
-                                <p>
+                                <p data-testid="order-date">
                                     ${formattedDate}
                                 </p>
                             </div>
@@ -2224,35 +2282,35 @@ if (ordersContainer) {
                             <span class="
                                 order-status
                                 order-status-${order.status.toLowerCase()}
-                            ">
+                            " data-testid="order-status">
                                 ${order.status}
                             </span>
 
                         </div>
 
-                        <div class="order-card-details">
+                        <div class="order-card-details" data-testid="order-card-details">
 
                             <div>
                                 <strong>Total</strong>
-                                <span>
+                                <span data-testid="order-total">
                                     €${total}
                                 </span>
                             </div>
 
                             <div>
                                 <strong>Status</strong>
-                                <span>
+                                <span data-testid="order-status-detail">
                                     ${order.status}
                                 </span>
                             </div>
 
                         </div>
 
-                        <div class="order-card-actions">
+                        <div class="order-card-actions" data-testid="order-card-actions">
 
                             <a
                                 href="order-confirmation.html?orderId=${order.id}"
-                                class="account-button">
+                                class="account-button" data-testid="view-order-details">
                                 View Details
                             </a>
 

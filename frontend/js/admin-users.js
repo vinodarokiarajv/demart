@@ -78,6 +78,9 @@ try {
         const row =
             document.createElement("tr");
 
+        row.setAttribute("data-testid", "admin-user-row");
+        row.setAttribute("data-user-id", user.id);
+
         const isCurrentAdmin =
             user.id === adminUser.id;
 
@@ -99,6 +102,7 @@ try {
 
                 <select
                     class="admin-role-select"
+                    data-testid="admin-role-select"
                     data-user-id="${user.id}"
                     ${isCurrentAdmin ? "disabled" : ""}
                 >
@@ -125,11 +129,12 @@ try {
 
                 ${
                     isCurrentAdmin
-                        ? "<span>Current Admin</span>"
+                        ? "<span data-testid=\"current-admin-label\">Current Admin</span>"
                         : `
                             <button
                                 type="button"
                                 class="admin-role-update-button"
+                                data-testid="admin-role-update"
                                 data-user-id="${user.id}"
                                 data-current-role="${user.role}"
                             >
