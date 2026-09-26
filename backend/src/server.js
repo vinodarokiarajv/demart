@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path");
 const cors = require("cors");
 const helmet = require("helmet");
 const authRoutes = require("./routes/authRoutes");
@@ -7,6 +8,8 @@ const orderRoutes = require("./routes/orderRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const adminOrderRoutes = require("./routes/adminOrderRoutes");
 const adminUserRoutes = require("./routes/adminUserRoutes");
+const locationRoutes = require("./routes/locationRoutes");
+const storeRoutes = require("./routes/storeRoutes");
 const pool = require("./db/db");
 const config = require("./config");
 
@@ -54,6 +57,8 @@ app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin/orders", adminOrderRoutes);
 app.use("/api/admin/users", adminUserRoutes);
+app.use("/api/locations", locationRoutes);
+app.use("/api/stores", storeRoutes);
 
 app.get("/api/health", function (req, res) {
     res.json({
@@ -79,6 +84,14 @@ app.get("/api/db-health", async function (req, res) {
             message: "Database connection failed"
         });
     }
+});
+
+const frontendPath = path.join(__dirname, "../../frontend");
+
+app.use(express.static(frontendPath));
+
+app.get("/", function (req, res) {
+    res.sendFile(path.join(frontendPath, "index.html"));
 });
 
 app.use(function (error, req, res, next) {

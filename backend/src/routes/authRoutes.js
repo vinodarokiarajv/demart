@@ -28,6 +28,28 @@ const registrationLimiter = rateLimit({
     }
 });
 
+const forgotPasswordLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: {
+        message:
+            "Too many password reset requests. Please try again later."
+    }
+});
+
+const resetPasswordLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: {
+        message:
+            "Too many password reset attempts. Please try again later."
+    }
+});
+
 router.post(
     "/register",
     registrationLimiter,
@@ -38,6 +60,18 @@ router.post(
     "/login",
     loginLimiter,
     authController.login
+);
+
+router.post(
+    "/forgot-password",
+    forgotPasswordLimiter,
+    authController.forgotPassword
+);
+
+router.post(
+    "/reset-password",
+    resetPasswordLimiter,
+    authController.resetPassword
 );
 
 router.get("/me", authMiddleware, authController.me);

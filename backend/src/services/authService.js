@@ -1,4 +1,5 @@
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const pool = require("../db/db");
 
@@ -123,6 +124,153 @@ async function loginUser(email, password) {
         created_at: user.created_at,
         token: token
     };
+}
+
+async function createPasswordResetToken(email) {
+    const result = await pool.query(
+        `
+        SELECT id
+        FROM users
+        WHERE email = $1
+          AND account_status = 'ACTIVE'
+        `,
+        [email]
+    );
+
+    if (result.rows.length === 0) {
+        return null;
+    }
+
+    const userId = result.rows[0].id;
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    const tokenHash = crypto
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex");
+
+    const expiresAt = new Date(
+        Date.now() + 15 * 60 * 1000
+    );
+
+    await pool.query(
+        `
+        DELETE FROM password_reset_tokens
+        WHERE user_id = $1
+          AND used_at IS NULL
+        `,
+        [userId]
+    );
+
+    await pool.query(
+        `
+        INSERT INTO password_reset_tokens
+            (
+                user_id,
+                token_hash,
+                expires_at
+            )
+        VALUES ($1, $2, $3)
+        `,
+        [
+            userId,
+            tokenHash,
+            expiresAt
+        ]
+    );
+
+    return resetToken;
+}
+
+async function resetPassword(resetToken, newPassword) {
+    const tokenHash = crypto
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex");
+
+    const client = await pool.connect();
+
+    try {
+        await client.query("BEGIN");
+
+        const tokenResult = await client.query(
+            `
+            SELECT
+                prt.id,
+                prt.user_id
+            FROM password_reset_tokens prt
+            INNER JOIN users u
+                ON u.id = prt.user_id
+            WHERE prt.token_hash = $1
+              AND prt.used_at IS NULL
+              AND prt.expires_at > CURRENT_TIMESTAMP
+              AND u.account_status = 'ACTIVE'
+            FOR UPDATE
+            `,
+            [tokenHash]
+        );
+
+        if (tokenResult.rows.length === 0) {
+            await client.query("ROLLBACK");
+            return false;
+        }
+
+        const resetRecord = tokenResult.rows[0];
+
+        const passwordHash = await bcrypt.hash(
+            newPassword,
+            10
+        );
+
+        await client.query(
+            `
+            UPDATE users
+            SET password_hash = $1
+            WHERE id = $2
+            `,
+            [
+                passwordHash,
+                resetRecord.user_id
+            ]
+        );
+
+        await client.query(
+            `
+            UPDATE password_reset_tokens
+            SET used_at = CURRENT_TIMESTAMP
+            WHERE id = $1
+            `,
+            [resetRecord.id]
+        );
+
+        await client.query(
+            `
+            UPDATE password_reset_tokens
+            SET used_at = CURRENT_TIMESTAMP
+            WHERE user_id = $1
+              AND used_at IS NULL
+              AND id <> $2
+            `,
+            [
+                resetRecord.user_id,
+                resetRecord.id
+            ]
+        );
+
+        await client.query("COMMIT");
+
+        return true;
+
+    } catch (error) {
+
+        await client.query("ROLLBACK");
+        throw error;
+
+    } finally {
+
+        client.release();
+    }
 }
 
 async function getUserById(userId) {
@@ -335,6 +483,8 @@ async function getAllUsers() {
 module.exports = {
     registerUser,
     loginUser,
+    createPasswordResetToken,
+    resetPassword,
     getUserById,
     updateUser,
     deleteUserAccount,

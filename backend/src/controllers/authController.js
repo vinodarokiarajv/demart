@@ -157,6 +157,142 @@ async function login(req, res) {
     }
 }
 
+async function forgotPassword(req, res) {
+
+    const email = String(req.body.email || "")
+        .trim()
+        .toLowerCase();
+
+    if (!email) {
+        return res.status(400).json({
+            message: "Email is required"
+        });
+    }
+
+    if (!isValidEmail(email)) {
+        return res.status(400).json({
+            message: "Please enter a valid email address"
+        });
+    }
+
+    try {
+
+        const resetToken =
+            await authService.createPasswordResetToken(email);
+
+        /*
+         * Do not reveal whether the email exists.
+         * This prevents account enumeration.
+         */
+
+        const response = {
+            message:
+                "If an account exists for this email, a password reset link has been generated."
+        };
+
+        if (resetToken && process.env.NODE_ENV !== "production") {
+            response.resetUrl = `http://localhost:3000/pages/reset-password.html?token=${resetToken}`;
+        }
+
+        return res.status(200).json(response);
+
+    } catch (error) {
+
+        console.error(
+            "Forgot password error:",
+            error
+        );
+
+        return res.status(500).json({
+            message: "Password reset request failed"
+        });
+    }
+}
+
+async function resetPassword(req, res) {
+
+    const resetToken = String(
+        req.body.token || ""
+    ).trim();
+
+    const newPassword = req.body.newPassword;
+
+    if (!resetToken) {
+        return res.status(400).json({
+            message: "Password reset token is required"
+        });
+    }
+
+    if (!newPassword) {
+        return res.status(400).json({
+            message: "New password is required"
+        });
+    }
+
+    if (newPassword.length < 8) {
+        return res.status(400).json({
+            message: "Password must be at least 8 characters"
+        });
+    }
+
+    if (!/[A-Z]/.test(newPassword)) {
+        return res.status(400).json({
+            message:
+                "Password must contain at least one uppercase letter"
+        });
+    }
+
+    if (!/[a-z]/.test(newPassword)) {
+        return res.status(400).json({
+            message:
+                "Password must contain at least one lowercase letter"
+        });
+    }
+
+    if (!/[0-9]/.test(newPassword)) {
+        return res.status(400).json({
+            message:
+                "Password must contain at least one number"
+        });
+    }
+
+    if (!/[^A-Za-z0-9]/.test(newPassword)) {
+        return res.status(400).json({
+            message:
+                "Password must contain at least one special character"
+        });
+    }
+
+    try {
+
+        const resetSuccessful =
+            await authService.resetPassword(
+                resetToken,
+                newPassword
+            );
+
+        if (!resetSuccessful) {
+            return res.status(400).json({
+                message:
+                    "This password reset link is invalid or has expired."
+            });
+        }
+
+        return res.status(200).json({
+            message:
+                "Your password has been reset successfully."
+        });
+
+    } catch (error) {
+
+        console.error("Password reset error:", error);
+
+        return res.status(500).json({
+            message: "Password reset failed"
+        });
+    }
+}
+
 async function me(req, res) {
 
     try {
@@ -296,6 +432,8 @@ async function deleteMe(req, res) {
 module.exports = {
     register,
     login,
+    forgotPassword,
+    resetPassword,
     me,
     updateMe,
     deleteMe

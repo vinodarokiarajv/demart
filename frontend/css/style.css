@@ -3183,3 +3183,9 @@ body {
     width: 100%;
     box-sizing: border-box;
 }
+
+.checkout-button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: auto;
+}

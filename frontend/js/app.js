@@ -315,6 +315,345 @@ if (loginForm) {
 
 }
 
+const forgotPasswordForm =
+    document.getElementById("forgot-password-form");
+
+if (forgotPasswordForm) {
+
+    forgotPasswordForm.addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
+
+            const emailInput =
+                document.getElementById(
+                    "forgot-password-email"
+                );
+
+            const messageElement =
+                document.getElementById(
+                    "forgot-password-message"
+                );
+
+            const submitButton =
+                document.getElementById(
+                    "forgot-password-submit"
+                );
+
+            const email =
+                emailInput.value.trim();
+
+            if (!email) {
+                messageElement.textContent =
+                    "Email is required";
+                return;
+            }
+
+            try {
+
+                submitButton.disabled = true;
+
+                messageElement.textContent =
+                    "Processing request...";
+
+                const response = await fetch(
+                    "http://localhost:3000/api/auth/forgot-password",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            email: email
+                        })
+                    }
+                );
+
+                const result =
+                    await response.json();
+
+                if (response.ok) {
+
+                    messageElement.innerHTML =
+                        result.message;
+
+                    /*
+                     * Development-only reset link.
+                     *
+                     * The backend intentionally returns this
+                     * only outside production.
+                     */
+                    if (result.resetUrl) {
+
+                        const resetLink =
+                            document.createElement("a");
+
+                        resetLink.href =
+                            result.resetUrl;
+
+                        resetLink.textContent =
+                            "Open password reset page";
+
+                        resetLink.target = "_self";
+
+                        messageElement.appendChild(
+                            document.createElement("br")
+                        );
+
+                        messageElement.appendChild(
+                            resetLink
+                        );
+                    }
+
+                    forgotPasswordForm.reset();
+
+                } else {
+
+                    messageElement.textContent =
+                        result.message ||
+                        "Password reset request failed";
+
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Forgot password request failed:",
+                    error
+                );
+
+                messageElement.textContent =
+                    "Unable to connect to the server";
+
+            } finally {
+
+                submitButton.disabled = false;
+
+            }
+
+        }
+    );
+
+}
+
+const resetPasswordForm =
+    document.getElementById("reset-password-form");
+
+if (resetPasswordForm) {
+
+    const resetPasswordInput =
+        document.getElementById("reset-password");
+
+    const resetConfirmPasswordInput =
+        document.getElementById(
+            "reset-confirm-password"
+        );
+
+    const messageElement =
+        document.getElementById(
+            "reset-password-message"
+        );
+
+    const submitButton =
+        document.getElementById(
+            "reset-password-submit"
+        );
+
+    const urlParams =
+        new URLSearchParams(
+            window.location.search
+        );
+
+    const resetToken =
+        urlParams.get("token");
+
+    if (!resetToken) {
+
+        messageElement.textContent =
+            "This password reset link is invalid or incomplete.";
+
+        submitButton.disabled = true;
+
+    } else {
+
+        resetPasswordForm.addEventListener(
+            "submit",
+            async function (event) {
+
+                event.preventDefault();
+
+                const newPassword =
+                    resetPasswordInput.value;
+
+                const confirmPassword =
+                    resetConfirmPasswordInput.value;
+
+                if (!newPassword) {
+
+                    messageElement.textContent =
+                        "Password is required";
+
+                    return;
+                }
+
+                if (newPassword.length < 8) {
+
+                    messageElement.textContent =
+                        "Password must be at least 8 characters";
+
+                    return;
+                }
+
+                if (!/[A-Z]/.test(newPassword)) {
+
+                    messageElement.textContent =
+                        "Password must contain at least one uppercase letter";
+
+                    return;
+                }
+
+                if (!/[a-z]/.test(newPassword)) {
+
+                    messageElement.textContent =
+                        "Password must contain at least one lowercase letter";
+
+                    return;
+                }
+
+                if (!/[0-9]/.test(newPassword)) {
+
+                    messageElement.textContent =
+                        "Password must contain at least one number";
+
+                    return;
+                }
+
+                if (!/[^A-Za-z0-9]/.test(newPassword)) {
+
+                    messageElement.textContent =
+                        "Password must contain at least one special character";
+
+                    return;
+                }
+
+                if (!confirmPassword) {
+
+                    messageElement.textContent =
+                        "Please confirm your password";
+
+                    return;
+                }
+
+                if (newPassword !== confirmPassword) {
+
+                    messageElement.textContent =
+                        "Passwords do not match";
+
+                    return;
+                }
+
+                try {
+
+                    submitButton.disabled = true;
+
+                    messageElement.textContent =
+                        "Resetting password...";
+
+                    const response = await fetch(
+                        "http://localhost:3000/api/auth/reset-password",
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+
+                            body: JSON.stringify({
+                                token: resetToken,
+                                newPassword: newPassword
+                            })
+                        }
+                    );
+
+                    const result =
+                        await response.json();
+
+                    if (response.ok) {
+
+                        messageElement.textContent =
+                            result.message;
+
+                        resetPasswordForm.reset();
+
+                        setTimeout(
+                            function () {
+                                window.location.href =
+                                    "login.html";
+                            },
+                            1500
+                        );
+
+                    } else {
+
+                        messageElement.textContent =
+                            result.message ||
+                            "Password reset failed";
+
+                    }
+
+                } catch (error) {
+
+                    console.error(
+                        "Reset password request failed:",
+                        error
+                    );
+
+                    messageElement.textContent =
+                        "Unable to connect to the server";
+
+                } finally {
+
+                    submitButton.disabled = false;
+
+                }
+
+            }
+        );
+
+    }
+
+}
+
+function updateCartCheckoutState() {
+
+    const checkoutLink =
+        document.getElementById("proceed-to-checkout");
+
+    if (!checkoutLink) {
+        return;
+    }
+
+    const cart = getStoredCart();
+
+    const hasItems = cart.length > 0;
+
+    checkoutLink.setAttribute(
+        "aria-disabled",
+        String(!hasItems)
+    );
+
+    checkoutLink.classList.toggle(
+        "disabled",
+        !hasItems
+    );
+
+    checkoutLink.tabIndex =
+        hasItems ? 0 : -1;
+}
+
 /* ========================================
    Navigation State
    ======================================== */
@@ -358,6 +697,27 @@ function getStoredCart() {
     }
 }
 
+function updateCartCount() {
+
+    const cartCountElement =
+        document.getElementById("cart-count");
+
+    if (!cartCountElement) {
+        return;
+    }
+
+    const cart = getStoredCart();
+
+    const totalQuantity = cart.reduce(
+        function (total, item) {
+            return total + Number(item.quantity || 0);
+        },
+        0
+    );
+
+    cartCountElement.textContent = totalQuantity;
+}
+
 function saveCart(cart) {
     localStorage.setItem(
         getCartStorageKey(),
@@ -366,7 +726,12 @@ function saveCart(cart) {
 }
 
 function clearStoredCart() {
-    localStorage.removeItem(getCartStorageKey());
+
+    localStorage.removeItem(
+        getCartStorageKey()
+    );
+
+    updateCartCount();
 }
 
 function updateNavigation() {
@@ -435,6 +800,7 @@ if (logoutLink) {
 }
 
 updateNavigation();
+updateCartCount();
 
 const logoutLink =
     document.getElementById("logout-link");
@@ -520,9 +886,11 @@ function addToCart(product, quantity = 1) {
 
     }
 
-    saveCart(cart);
+        saveCart(cart);
 
-    console.log("Product added to cart:", product.name);
+        updateCartCount();
+
+        console.log("Product added to cart:", product.name);
 }
 
 const productContainer = document.querySelector(".product-container");
@@ -1034,6 +1402,8 @@ if (cartItemsContainer) {
         const cart =
             getStoredCart();
 
+            updateCartCheckoutState();
+
             let subtotal = 0;
 
 cart.forEach(function (item) {
@@ -1153,6 +1523,8 @@ removeButton.addEventListener("click", function () {
 
     saveCart(updatedCart);
 
+    updateCartCount();
+
     loadCart();
 });
 
@@ -1171,6 +1543,8 @@ quantityInput.addEventListener("change", function () {
     item.quantity = newQuantity;
 
     saveCart(cart);
+
+    updateCartCount();
 
     loadCart();
 });
@@ -2180,6 +2554,27 @@ if (orderDetailsContainer) {
     }
 
     loadOrderConfirmation();
+}
+
+const proceedToCheckout =
+    document.getElementById("proceed-to-checkout");
+
+if (proceedToCheckout) {
+
+    proceedToCheckout.addEventListener(
+        "click",
+        function (event) {
+
+            const cart = getStoredCart();
+
+            if (cart.length === 0) {
+
+                event.preventDefault();
+
+                return;
+            }
+        }
+    );
 }
 
 /* ========================================
