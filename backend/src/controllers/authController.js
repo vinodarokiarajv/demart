@@ -10,23 +10,27 @@ async function register(req, res) {
     const lastName = req.body.lastName?.trim();
     const email = req.body.email?.trim();
     const password = req.body.password;
+    const phone = req.body.phone?.trim();
     const street = req.body.street?.trim();
     const postalCode = req.body.postalCode?.trim();
     const city = req.body.city?.trim();
     const country = req.body.country?.trim();
+    const addressLine2 = req.body.addressLine2?.trim() || null;
+    const landmark = req.body.landmark?.trim() || null;
 
     if (
         !firstName ||
         !lastName ||
         !email ||
         !password ||
+        !phone ||
         !street ||
         !postalCode ||
         !city ||
         !country
     ) {
         return res.status(400).json({
-            message: "All registration fields are required"
+            message: "All required registration fields are required"
         });
     }
 
@@ -37,13 +41,16 @@ async function register(req, res) {
     }
 
     const addressValidationError = validateAddressFields({
-            firstName,
-            lastName,
-            street,
-            postalCode,
-            city,
-            country
-        });
+        firstName,
+        lastName,
+        phone,
+        street,
+        postalCode,
+        city,
+        country,
+        addressLine2,
+        landmark
+    });
 
     if (addressValidationError) {
         return res.status(400).json({
@@ -87,10 +94,13 @@ async function register(req, res) {
             lastName,
             email,
             password,
+            phone,
             street,
             postalCode,
             city,
-            country
+            country,
+            addressLine2,
+            landmark
         );
 
         res.status(201).json({
@@ -102,7 +112,7 @@ async function register(req, res) {
 
         if (error.code === "23505") {
             return res.status(409).json({
-                message: "Email address is already registered"
+                message: "Email address is already associated with another account"
             });
         }
 
@@ -326,22 +336,26 @@ async function updateMe(req, res) {
     const firstName = req.body.firstName?.trim();
     const lastName = req.body.lastName?.trim();
     const email = req.body.email?.trim();
+    const phone = req.body.phone?.trim();
     const street = req.body.street?.trim();
     const postalCode = req.body.postalCode?.trim();
     const city = req.body.city?.trim();
     const country = req.body.country?.trim();
+    const addressLine2 = req.body.addressLine2?.trim() || null;
+    const landmark = req.body.landmark?.trim() || null;
 
     if (
         !firstName ||
         !lastName ||
         !email ||
+        !phone ||
         !street ||
         !postalCode ||
         !city ||
         !country
     ) {
         return res.status(400).json({
-            message: "All account fields are required"
+            message: "All required account fields are required"
         });
     }
 
@@ -352,13 +366,16 @@ async function updateMe(req, res) {
     }
 
     const addressValidationError = validateAddressFields({
-            firstName,
-            lastName,
-            street,
-            postalCode,
-            city,
-            country
-        });
+        firstName,
+        lastName,
+        phone,
+        street,
+        postalCode,
+        city,
+        country,
+        addressLine2,
+        landmark
+    });
 
     if (addressValidationError) {
         return res.status(400).json({
@@ -372,10 +389,13 @@ async function updateMe(req, res) {
             firstName,
             lastName,
             email,
+            phone,
             street,
             postalCode,
             city,
-            country
+            country,
+            addressLine2,
+            landmark
         );
 
         if (!user) {
@@ -388,13 +408,12 @@ async function updateMe(req, res) {
             message: "Account updated successfully",
             user: user
         });
-
     } catch (error) {
         console.error("Account update error:", error);
 
         if (error.code === "23505") {
             return res.status(409).json({
-                message: "Email address is already registered"
+                message: "Email address is already associated with another account"
             });
         }
 

@@ -18,7 +18,7 @@ async function getCountries(req, res) {
 
 async function getRegions(req, res) {
     try {
-        const { country } = req.query;
+        const country = req.query.country?.trim();
 
         if (!country) {
             return res.status(400).json({
@@ -42,7 +42,8 @@ async function getRegions(req, res) {
 
 async function getCities(req, res) {
     try {
-        const { country, region } = req.query;
+        const country = req.query.country?.trim();
+        const region = req.query.region?.trim();
 
         if (!country || !region) {
             return res.status(400).json({

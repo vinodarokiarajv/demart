@@ -75,9 +75,31 @@
                 >
 
     <div class="form-group">
-        <label for="register-first-name">
-            First Name
-        </label>
+
+        <div class="field-label">
+            <label for="register-first-name">
+                First Name
+            </label>
+
+            <button
+                type="button"
+                class="field-info"
+                data-testid="register-first-name-info"
+                aria-label="Information about First Name"
+                aria-describedby="register-first-name-info-text"
+            >
+                <span aria-hidden="true">ⓘ</span>
+
+                <span
+                    id="register-first-name-info-text"
+                    class="field-info-tooltip"
+                    role="tooltip"
+                >
+                    Enter your first or given name.
+                </span>
+            </button>
+        </div>
+
         <input
             id="register-first-name"
             name="firstName"
@@ -87,12 +109,40 @@
             autocomplete="given-name"
             required
         >
+
+        <p
+            id="register-first-name-error"
+            class="field-error"
+            data-testid="register-first-name-error"
+            role="alert"
+        ></p>
+
     </div>
 
     <div class="form-group">
+        <div class="field-label">
         <label for="register-last-name">
             Last Name
         </label>
+
+        <button
+            type="button"
+            class="field-info"
+            data-testid="register-last-name-info"
+            aria-label="Information about Last Name"
+            aria-describedby="register-last-name-info-text"
+        >
+            <span aria-hidden="true">ⓘ</span>
+
+            <span
+                id="register-last-name-info-text"
+                class="field-info-tooltip"
+                role="tooltip"
+            >
+                Enter your family or last name.
+            </span>
+        </button>
+    </div>
         <input
             id="register-last-name"
             name="lastName"
@@ -102,12 +152,39 @@
             autocomplete="surname"
             required
         >
+
+    <p
+        id="register-last-name-error"
+        class="field-error"
+        data-testid="register-last-name-error"
+        role="alert"
+    ></p>
     </div>
 
     <div class="form-group">
+        <div class="field-label">
         <label for="register-email">
             Email Address
         </label>
+
+        <button
+            type="button"
+            class="field-info"
+            data-testid="register-email-info"
+            aria-label="Information about Email Address"
+            aria-describedby="register-email-info-text"
+        >
+            <span aria-hidden="true">ⓘ</span>
+
+            <span
+                id="register-email-info-text"
+                class="field-info-tooltip"
+                role="tooltip"
+            >
+                Enter an email address you can access. It will be used for account-related communication.
+            </span>
+        </button>
+    </div>
         <input
             id="register-email"
             name="email"
@@ -117,27 +194,134 @@
             autocomplete="email"
             required
         >
+
+    <p
+        id="register-email-error"
+        class="field-error"
+        data-testid="register-email-error"
+        role="alert"
+    ></p>
     </div>
 
     <div class="form-group">
+    <div class="field-label">
         <label for="register-password">
             Password
         </label>
-        <input
-            id="register-password"
-            name="password"
-            data-testid="register-password"
-            type="password"
-            placeholder="Enter your password"
-            autocomplete="new-password"
-            required
+
+        <button
+            type="button"
+            class="field-info"
+            data-testid="register-password-info"
+            aria-label="Information about Password"
+            aria-describedby="register-password-info-text"
         >
+            <span aria-hidden="true">ⓘ</span>
+
+            <span
+                id="register-password-info-text"
+                class="field-info-tooltip"
+                role="tooltip"
+            >
+                Your password must meet all the requirements shown below.
+            </span>
+        </button>
     </div>
 
+    <input
+        id="register-password"
+        name="password"
+        data-testid="register-password"
+        type="password"
+        placeholder="Enter your password"
+        autocomplete="new-password"
+        required
+    >
+
+    <div
+        class="password-requirements"
+        id="register-password-requirements"
+        data-testid="register-password-requirements"
+    >
+        <div class="password-requirements-title">
+            Password requirements
+        </div>
+
+        <ul>
+            <li
+                id="password-requirement-length"
+                data-testid="password-requirement-length"
+            >
+                <span class="requirement-icon" aria-hidden="true">×</span>
+                <span>Minimum 8 characters</span>
+            </li>
+
+            <li
+                id="password-requirement-uppercase"
+                data-testid="password-requirement-uppercase"
+            >
+                <span class="requirement-icon" aria-hidden="true">×</span>
+                <span>At least one uppercase letter</span>
+            </li>
+
+            <li
+                id="password-requirement-lowercase"
+                data-testid="password-requirement-lowercase"
+            >
+                <span class="requirement-icon" aria-hidden="true">×</span>
+                <span>At least one lowercase letter</span>
+            </li>
+
+            <li
+                id="password-requirement-number"
+                data-testid="password-requirement-number"
+            >
+                <span class="requirement-icon" aria-hidden="true">×</span>
+                <span>At least one number</span>
+            </li>
+
+            <li
+                id="password-requirement-special"
+                data-testid="password-requirement-special"
+            >
+                <span class="requirement-icon" aria-hidden="true">×</span>
+                <span>At least one special character</span>
+            </li>
+        </ul>
+    </div>
+
+    <p
+        id="register-password-error"
+        class="field-error"
+        data-testid="register-password-error"
+        role="alert"
+    ></p>
+</div>
+
     <div class="form-group">
+        <div class="field-label">
         <label for="register-confirm-password">
             Confirm Password
         </label>
+
+        <button
+            type="button"
+            class="field-info"
+            data-testid="register-confirm-password-info"
+            aria-label="Information about Confirm Password"
+            aria-describedby="register-confirm-password-info-text"
+        >
+            <span aria-hidden="true">ⓘ</span>
+
+            <span
+                id="register-confirm-password-info-text"
+                class="field-info-tooltip"
+                role="tooltip"
+            >
+                Re-enter the same password to confirm it.
+            </span>
+        </button>
+    </div>
         <input
             id="register-confirm-password"
             name="confirmPassword"
@@ -147,12 +331,81 @@
             autocomplete="new-password"
             required
         >
+
+    <p
+        id="register-confirm-password-error"
+        class="field-error"
+        data-testid="register-confirm-password-error"
+        role="alert"
+    ></p>
     </div>
 
     <div class="form-group">
+    <div class="field-label">
+        <label for="register-phone">
+            Phone Number
+        </label>
+
+        <button
+            type="button"
+            class="field-info"
+            data-testid="register-phone-info"
+            aria-label="Information about Phone Number"
+            aria-describedby="register-phone-info-text"
+        >
+            <span aria-hidden="true">ⓘ</span>
+
+            <span
+                id="register-phone-info-text"
+                class="field-info-tooltip"
+                role="tooltip"
+            >
+                Enter a valid phone number. Example: +49 151 12345678
+            </span>
+        </button>
+    </div>
+    <input
+        id="register-phone"
+        name="phone"
+        data-testid="register-phone"
+        type="tel"
+        placeholder="Enter your phone number"
+        autocomplete="tel"
+        required
+    >
+
+    <p
+        id="register-phone-error"
+        class="field-error"
+        data-testid="register-phone-error"
+        role="alert"
+    ></p>
+    </div>
+
+    <div class="form-group">
+        <div class="field-label">
         <label for="register-street">
             Street Address
         </label>
+
+        <button
+            type="button"
+            class="field-info"
+            data-testid="register-street-info"
+            aria-label="Information about Street Address"
+            aria-describedby="register-street-info-text"
+        >
+            <span aria-hidden="true">ⓘ</span>
+
+            <span
+                id="register-street-info-text"
+                class="field-info-tooltip"
+                role="tooltip"
+            >
+                Enter your street name and house or building number.
+            </span>
+        </button>
+    </div>
         <input
             id="register-street"
             name="street"
@@ -162,12 +415,122 @@
             autocomplete="street-address"
             required
         >
+
+    <p
+        id="register-street-error"
+        class="field-error"
+        data-testid="register-street-error"
+        role="alert"
+    ></p>
     </div>
 
     <div class="form-group">
+        <div class="field-label">
+        <label for="register-address-line-2">
+            Address Line 2
+        </label>
+
+        <button
+            type="button"
+            class="field-info"
+            data-testid="register-address-line-2-info"
+            aria-label="Information about Address Line 2"
+            aria-describedby="register-address-line-2-info-text"
+        >
+            <span aria-hidden="true">ⓘ</span>
+
+            <span
+                id="register-address-line-2-info-text"
+                class="field-info-tooltip"
+                role="tooltip"
+            >
+                Optional. Use this for apartment, unit, building, floor, or other additional address details.
+            </span>
+        </button>
+    </div>
+        <input
+            id="register-address-line-2"
+            name="addressLine2"
+            data-testid="register-address-line-2"
+            type="text"
+            placeholder="Apartment, building, floor, etc. (optional)"
+            autocomplete="address-line2"
+            maxlength="100"
+        >
+
+    <p
+        id="register-address-line-2-error"
+        class="field-error"
+        data-testid="register-address-line-2-error"
+        role="alert"
+    ></p>
+    </div>
+
+    <div class="form-group">
+        <div class="field-label">
+        <label for="register-landmark">
+            Landmark
+        </label>
+
+        <button
+            type="button"
+            class="field-info"
+            data-testid="register-landmark-info"
+            aria-label="Information about Landmark"
+            aria-describedby="register-landmark-info-text"
+        >
+            <span aria-hidden="true">ⓘ</span>
+
+            <span
+                id="register-landmark-info-text"
+                class="field-info-tooltip"
+                role="tooltip"
+            >
+                Optional. Add a nearby landmark if it helps identify your address.
+            </span>
+        </button>
+    </div>
+        <input
+            id="register-landmark"
+            name="landmark"
+            data-testid="register-landmark"
+            type="text"
+            placeholder="Nearby landmark (optional)"
+            maxlength="100"
+        >
+
+    <p
+        id="register-landmark-error"
+        class="field-error"
+        data-testid="register-landmark-error"
+        role="alert"
+    ></p>
+    </div>
+
+    <div class="form-group">
+        <div class="field-label">
         <label for="register-postal-code">
             Postal Code
         </label>
+
+        <button
+            type="button"
+            class="field-info"
+            data-testid="register-postal-code-info"
+            aria-label="Information about Postal Code"
+            aria-describedby="register-postal-code-info-text"
+        >
+            <span aria-hidden="true">ⓘ</span>
+
+            <span
+                id="register-postal-code-info-text"
+                class="field-info-tooltip"
+                role="tooltip"
+            >
+                Enter the postal or ZIP code for your address.
+            </span>
+        </button>
+    </div>
         <input
             id="register-postal-code"
             name="postalCode"
@@ -177,12 +540,39 @@
             autocomplete="postal-code"
             required
         >
+
+    <p
+        id="register-postal-code-error"
+        class="field-error"
+        data-testid="register-postal-code-error"
+        role="alert"
+    ></p>
     </div>
 
     <div class="form-group">
+        <div class="field-label">
         <label for="register-city">
             City
         </label>
+
+        <button
+            type="button"
+            class="field-info"
+            data-testid="register-city-info"
+            aria-label="Information about City"
+            aria-describedby="register-city-info-text"
+        >
+            <span aria-hidden="true">ⓘ</span>
+
+            <span
+                id="register-city-info-text"
+                class="field-info-tooltip"
+                role="tooltip"
+            >
+                Enter the city where the address is located.
+            </span>
+        </button>
+    </div>
         <input
             id="register-city"
             name="city"
@@ -192,12 +582,39 @@
             autocomplete="address-level2"
             required
         >
+
+    <p
+        id="register-city-error"
+        class="field-error"
+        data-testid="register-city-error"
+        role="alert"
+    ></p>
     </div>
 
     <div class="form-group">
+        <div class="field-label">
         <label for="register-country">
             Country
         </label>
+
+        <button
+            type="button"
+            class="field-info"
+            data-testid="register-country-info"
+            aria-label="Information about Country"
+            aria-describedby="register-country-info-text"
+        >
+            <span aria-hidden="true">ⓘ</span>
+
+            <span
+                id="register-country-info-text"
+                class="field-info-tooltip"
+                role="tooltip"
+            >
+                Enter the country associated with the address.
+            </span>
+        </button>
+    </div>
         <input
             id="register-country"
             name="country"
@@ -207,6 +624,13 @@
             placeholder="Enter your country"
             required
         >
+
+    <p
+        id="register-country-error"
+        class="field-error"
+        data-testid="register-country-error"
+        role="alert"
+    ></p>
     </div>
 
     <div class="terms-agreement">
@@ -233,6 +657,13 @@
                 </a>
             </span>
         </label>
+
+        <p
+            id="register-terms-error"
+            class="field-error"
+            data-testid="register-terms-error"
+            role="alert"
+        ></p>
 
     </div>
 

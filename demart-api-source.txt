@@ -1,0 +1,3401 @@
+===== backend/src/server.js =====
+const express = require("express");
+const path = require("path");
+const cors = require("cors");
+const helmet = require("helmet");
+const authRoutes = require("./routes/authRoutes");
+const productRoutes = require("./routes/productRoutes");
+const orderRoutes = require("./routes/orderRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
+const adminOrderRoutes = require("./routes/adminOrderRoutes");
+const adminUserRoutes = require("./routes/adminUserRoutes");
+const locationRoutes = require("./routes/locationRoutes");
+const storeRoutes = require("./routes/storeRoutes");
+const pool = require("./db/db");
+const config = require("./config");
+
+const app = express();
+const PORT = config.port;
+
+app.use(helmet());
+
+const allowedOrigins = (
+    process.env.CORS_ORIGINS ||
+    "http://127.0.0.1:5500,http://localhost:5500"
+)
+    .split(",")
+    .map(origin => origin.trim())
+    .filter(Boolean);
+
+app.use(
+    cors({
+        origin: function (origin, callback) {
+            if (!origin) {
+                return callback(null, true);
+            }
+
+            if (allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+
+            return callback(null, false);
+        }
+    })
+);
+
+/*
+ * Stripe webhook must receive the raw request body so that
+ * Stripe can verify the webhook signature.
+ *
+ * This route must be registered BEFORE express.json().
+ */
+app.use("/api/payments", paymentRoutes);
+
+app.use(express.json({ limit: "100kb" }));
+
+app.use("/api/auth", authRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/admin/orders", adminOrderRoutes);
+app.use("/api/admin/users", adminUserRoutes);
+app.use("/api/locations", locationRoutes);
+app.use("/api/stores", storeRoutes);
+
+app.get("/api/health", function (req, res) {
+    res.json({
+        status: "ok",
+        message: "DeMart API is running"
+    });
+});
+
+app.get("/api/db-health", async function (req, res) {
+    try {
+        const result = await pool.query("SELECT NOW()");
+
+        res.json({
+            status: "ok",
+            message: "Database connection successful",
+            databaseTime: result.rows[0].now
+        });
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            status: "error",
+            message: "Database connection failed"
+        });
+    }
+});
+
+const frontendPath = path.join(__dirname, "../../frontend");
+
+app.use(express.static(frontendPath));
+
+app.get("/", function (req, res) {
+    res.sendFile(path.join(frontendPath, "index.html"));
+});
+
+app.use(function (error, req, res, next) {
+    console.error("Unhandled application error:", error);
+
+    if (error.type === "entity.too.large") {
+        return res.status(413).json({
+            status: "error",
+            message: "Request body is too large"
+        });
+    }
+
+    return res.status(error.status || 500).json({
+        status: "error",
+        message: "Internal server error"
+    });
+});
+
+app.listen(PORT, function () {
+    console.log(`DeMart API running on http://localhost:${PORT}`);
+});
+
+===== backend/src/routes/authRoutes.js =====
+const express = require("express");
+
+const rateLimit = require("express-rate-limit");
+
+const authController = require("../controllers/authController");
+
+const authMiddleware = require("../middleware/authMiddleware");
+
+const router = express.Router();
+
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: {
+        message: "Too many login attempts. Please try again later."
+    }
+});
+
+const registrationLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: {
+        message: "Too many registration attempts. Please try again later."
+    }
+});
+
+const forgotPasswordLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: {
+        message:
+            "Too many password reset requests. Please try again later."
+    }
+});
+
+const resetPasswordLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: {
+        message:
+            "Too many password reset attempts. Please try again later."
+    }
+});
+
+router.post(
+    "/register",
+    registrationLimiter,
+    authController.register
+);
+
+router.post(
+    "/login",
+    loginLimiter,
+    authController.login
+);
+
+router.post(
+    "/forgot-password",
+    forgotPasswordLimiter,
+    authController.forgotPassword
+);
+
+router.post(
+    "/reset-password",
+    resetPasswordLimiter,
+    authController.resetPassword
+);
+
+router.get("/me", authMiddleware, authController.me);
+
+router.put(
+    "/me",
+    authMiddleware,
+    authController.updateMe
+);
+
+router.delete(
+    "/me",
+    authMiddleware,
+    authController.deleteMe
+);
+
+module.exports = router;
+===== backend/src/controllers/authController.js =====
+const authService = require("../services/authService");
+
+const {
+    isValidEmail,
+    validateAddressFields
+} = require("../utils/validation");
+
+async function register(req, res) {
+    const firstName = req.body.firstName?.trim();
+    const lastName = req.body.lastName?.trim();
+    const email = req.body.email?.trim();
+    const password = req.body.password;
+    const street = req.body.street?.trim();
+    const postalCode = req.body.postalCode?.trim();
+    const city = req.body.city?.trim();
+    const country = req.body.country?.trim();
+
+    if (
+        !firstName ||
+        !lastName ||
+        !email ||
+        !password ||
+        !street ||
+        !postalCode ||
+        !city ||
+        !country
+    ) {
+        return res.status(400).json({
+            message: "All registration fields are required"
+        });
+    }
+
+    if (!isValidEmail(email)) {
+        return res.status(400).json({
+            message: "Please enter a valid email address"
+        });
+    }
+
+    const addressValidationError = validateAddressFields({
+            firstName,
+            lastName,
+            street,
+            postalCode,
+            city,
+            country
+        });
+
+    if (addressValidationError) {
+        return res.status(400).json({
+            message: addressValidationError
+        });
+    }
+
+    if (password.length < 8) {
+        return res.status(400).json({
+            message: "Password must be at least 8 characters"
+        });
+    }
+
+    if (!/[A-Z]/.test(password)) {
+        return res.status(400).json({
+            message: "Password must contain at least one uppercase letter"
+        });
+    }
+
+    if (!/[a-z]/.test(password)) {
+        return res.status(400).json({
+            message: "Password must contain at least one lowercase letter"
+        });
+    }
+
+    if (!/[0-9]/.test(password)) {
+        return res.status(400).json({
+            message: "Password must contain at least one number"
+        });
+    }
+
+    if (!/[^A-Za-z0-9]/.test(password)) {
+        return res.status(400).json({
+            message: "Password must contain at least one special character"
+        });
+    }
+
+    try {
+        const user = await authService.registerUser(
+            firstName,
+            lastName,
+            email,
+            password,
+            street,
+            postalCode,
+            city,
+            country
+        );
+
+        res.status(201).json({
+            message: "User registered successfully",
+            user: user
+        });
+    } catch (error) {
+        console.error("Registration error:", error);
+
+        if (error.code === "23505") {
+            return res.status(409).json({
+                message: "Email address is already registered"
+            });
+        }
+
+        res.status(500).json({
+            message: "Registration failed"
+        });
+    }
+}
+
+
+async function login(req, res) {
+
+    const email = req.body.email?.trim();
+    const password = req.body.password;
+
+    if (!email || !password) {
+
+        return res.status(400).json({
+            message: "Email and password are required"
+        });
+
+    }
+
+    try {
+
+        const user = await authService.loginUser(
+            email,
+            password
+        );
+
+        if (!user) {
+
+            return res.status(401).json({
+                message: "Invalid email or password"
+            });
+
+        }
+
+        res.status(200).json({
+            message: "Login successful",
+            user: user
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            message: "Login failed"
+        });
+
+    }
+}
+
+async function forgotPassword(req, res) {
+
+    const email = String(req.body.email || "")
+        .trim()
+        .toLowerCase();
+
+    if (!email) {
+        return res.status(400).json({
+            message: "Email is required"
+        });
+    }
+
+    if (!isValidEmail(email)) {
+        return res.status(400).json({
+            message: "Please enter a valid email address"
+        });
+    }
+
+    try {
+
+        const resetToken =
+            await authService.createPasswordResetToken(email);
+
+        /*
+         * Do not reveal whether the email exists.
+         * This prevents account enumeration.
+         */
+
+        const response = {
+            message:
+                "If an account exists for this email, a password reset link has been generated."
+        };
+
+        if (resetToken && process.env.NODE_ENV !== "production") {
+            response.resetUrl = `http://localhost:3000/pages/reset-password.html?token=${resetToken}`;
+        }
+
+        return res.status(200).json(response);
+
+    } catch (error) {
+
+        console.error(
+            "Forgot password error:",
+            error
+        );
+
+        return res.status(500).json({
+            message: "Password reset request failed"
+        });
+    }
+}
+
+async function resetPassword(req, res) {
+
+    const resetToken = String(
+        req.body.token || ""
+    ).trim();
+
+    const newPassword = req.body.newPassword;
+
+    if (!resetToken) {
+        return res.status(400).json({
+            message: "Password reset token is required"
+        });
+    }
+
+    if (!newPassword) {
+        return res.status(400).json({
+            message: "New password is required"
+        });
+    }
+
+    if (newPassword.length < 8) {
+        return res.status(400).json({
+            message: "Password must be at least 8 characters"
+        });
+    }
+
+    if (!/[A-Z]/.test(newPassword)) {
+        return res.status(400).json({
+            message:
+                "Password must contain at least one uppercase letter"
+        });
+    }
+
+    if (!/[a-z]/.test(newPassword)) {
+        return res.status(400).json({
+            message:
+                "Password must contain at least one lowercase letter"
+        });
+    }
+
+    if (!/[0-9]/.test(newPassword)) {
+        return res.status(400).json({
+            message:
+                "Password must contain at least one number"
+        });
+    }
+
+    if (!/[^A-Za-z0-9]/.test(newPassword)) {
+        return res.status(400).json({
+            message:
+                "Password must contain at least one special character"
+        });
+    }
+
+    try {
+
+        const resetSuccessful =
+            await authService.resetPassword(
+                resetToken,
+                newPassword
+            );
+
+        if (!resetSuccessful) {
+            return res.status(400).json({
+                message:
+                    "This password reset link is invalid or has expired."
+            });
+        }
+
+        return res.status(200).json({
+            message:
+                "Your password has been reset successfully."
+        });
+
+    } catch (error) {
+
+        console.error("Password reset error:", error);
+
+        return res.status(500).json({
+            message: "Password reset failed"
+        });
+    }
+}
+
+async function me(req, res) {
+
+    try {
+
+        const user = await authService.getUserById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        res.status(200).json({
+            message: "Authenticated user",
+            user: user
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            message: "Failed to retrieve user"
+        });
+
+    }
+
+}
+
+async function updateMe(req, res) {
+    const firstName = req.body.firstName?.trim();
+    const lastName = req.body.lastName?.trim();
+    const email = req.body.email?.trim();
+    const street = req.body.street?.trim();
+    const postalCode = req.body.postalCode?.trim();
+    const city = req.body.city?.trim();
+    const country = req.body.country?.trim();
+
+    if (
+        !firstName ||
+        !lastName ||
+        !email ||
+        !street ||
+        !postalCode ||
+        !city ||
+        !country
+    ) {
+        return res.status(400).json({
+            message: "All account fields are required"
+        });
+    }
+
+    if (!isValidEmail(email)) {
+        return res.status(400).json({
+            message: "Please enter a valid email address"
+        });
+    }
+
+    const addressValidationError = validateAddressFields({
+            firstName,
+            lastName,
+            street,
+            postalCode,
+            city,
+            country
+        });
+
+    if (addressValidationError) {
+        return res.status(400).json({
+            message: addressValidationError
+        });
+    }
+
+    try {
+        const user = await authService.updateUser(
+            req.user.id,
+            firstName,
+            lastName,
+            email,
+            street,
+            postalCode,
+            city,
+            country
+        );
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        res.status(200).json({
+            message: "Account updated successfully",
+            user: user
+        });
+
+    } catch (error) {
+        console.error("Account update error:", error);
+
+        if (error.code === "23505") {
+            return res.status(409).json({
+                message: "Email address is already registered"
+            });
+        }
+
+        res.status(500).json({
+            message: "Account update failed"
+        });
+    }
+}
+
+async function deleteMe(req, res) {
+    try {
+        const user = await authService.deleteUserAccount(
+            req.user.id
+        );
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        res.status(200).json({
+            message: "Account deleted successfully"
+        });
+
+    } catch (error) {
+        console.error("Account deletion error:", error);
+
+        res.status(500).json({
+            message: "Account deletion failed"
+        });
+    }
+}
+
+module.exports = {
+    register,
+    login,
+    forgotPassword,
+    resetPassword,
+    me,
+    updateMe,
+    deleteMe
+};
+===== backend/src/services/authService.js =====
+const bcrypt = require("bcrypt");
+const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
+const pool = require("../db/db");
+
+const config = require("../config");
+
+async function registerUser(
+    firstName,
+    lastName,
+    email,
+    password,
+    street,
+    postalCode,
+    city,
+    country
+) {
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const result = await pool.query(
+        `INSERT INTO users
+            (
+                name,
+                first_name,
+                last_name,
+                email,
+                password_hash,
+                street,
+                postal_code,
+                city,
+                country
+            )
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+         RETURNING
+            id,
+            first_name,
+            last_name,
+            email,
+            street,
+            postal_code,
+            city,
+            country,
+            created_at`,
+        [
+            `${firstName} ${lastName}`,
+            firstName,
+            lastName,
+            email,
+            passwordHash,
+            street,
+            postalCode,
+            city,
+            country
+        ]
+    );
+
+    return result.rows[0];
+}
+
+async function loginUser(email, password) {
+
+    const result = await pool.query(
+        `SELECT
+            id,
+            name,
+            first_name,
+            last_name,
+            email,
+            password_hash,
+            street,
+            postal_code,
+            city,
+            country,
+            role,
+            account_status,
+            created_at
+         FROM users
+         WHERE email = $1`,
+        [email]
+    );
+
+    if (result.rows.length === 0) {
+        return null;
+    }
+
+    const user = result.rows[0];
+
+    if (user.account_status !== "ACTIVE") {
+    return null;
+}
+
+    const passwordMatch = await bcrypt.compare(
+        password,
+        user.password_hash
+    );
+
+    if (!passwordMatch) {
+        return null;
+    }
+
+    const token = jwt.sign(
+        {
+            id: user.id,
+            email: user.email,
+            role: user.role
+        },
+        config.jwtSecret,
+        {
+            expiresIn: "1h"
+        }
+    );
+
+    return {
+        id: user.id,
+        name: user.name,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        street: user.street,
+        postal_code: user.postal_code,
+        city: user.city,
+        country: user.country,
+        role: user.role,
+        created_at: user.created_at,
+        token: token
+    };
+}
+
+async function createPasswordResetToken(email) {
+    const result = await pool.query(
+        `
+        SELECT id
+        FROM users
+        WHERE email = $1
+          AND account_status = 'ACTIVE'
+        `,
+        [email]
+    );
+
+    if (result.rows.length === 0) {
+        return null;
+    }
+
+    const userId = result.rows[0].id;
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    const tokenHash = crypto
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex");
+
+    const expiresAt = new Date(
+        Date.now() + 15 * 60 * 1000
+    );
+
+    await pool.query(
+        `
+        DELETE FROM password_reset_tokens
+        WHERE user_id = $1
+          AND used_at IS NULL
+        `,
+        [userId]
+    );
+
+    await pool.query(
+        `
+        INSERT INTO password_reset_tokens
+            (
+                user_id,
+                token_hash,
+                expires_at
+            )
+        VALUES ($1, $2, $3)
+        `,
+        [
+            userId,
+            tokenHash,
+            expiresAt
+        ]
+    );
+
+    return resetToken;
+}
+
+async function resetPassword(resetToken, newPassword) {
+    const tokenHash = crypto
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex");
+
+    const client = await pool.connect();
+
+    try {
+        await client.query("BEGIN");
+
+        const tokenResult = await client.query(
+            `
+            SELECT
+                prt.id,
+                prt.user_id
+            FROM password_reset_tokens prt
+            INNER JOIN users u
+                ON u.id = prt.user_id
+            WHERE prt.token_hash = $1
+              AND prt.used_at IS NULL
+              AND prt.expires_at > CURRENT_TIMESTAMP
+              AND u.account_status = 'ACTIVE'
+            FOR UPDATE
+            `,
+            [tokenHash]
+        );
+
+        if (tokenResult.rows.length === 0) {
+            await client.query("ROLLBACK");
+            return false;
+        }
+
+        const resetRecord = tokenResult.rows[0];
+
+        const passwordHash = await bcrypt.hash(
+            newPassword,
+            10
+        );
+
+        await client.query(
+            `
+            UPDATE users
+            SET password_hash = $1
+            WHERE id = $2
+            `,
+            [
+                passwordHash,
+                resetRecord.user_id
+            ]
+        );
+
+        await client.query(
+            `
+            UPDATE password_reset_tokens
+            SET used_at = CURRENT_TIMESTAMP
+            WHERE id = $1
+            `,
+            [resetRecord.id]
+        );
+
+        await client.query(
+            `
+            UPDATE password_reset_tokens
+            SET used_at = CURRENT_TIMESTAMP
+            WHERE user_id = $1
+              AND used_at IS NULL
+              AND id <> $2
+            `,
+            [
+                resetRecord.user_id,
+                resetRecord.id
+            ]
+        );
+
+        await client.query("COMMIT");
+
+        return true;
+
+    } catch (error) {
+
+        await client.query("ROLLBACK");
+        throw error;
+
+    } finally {
+
+        client.release();
+    }
+}
+
+async function getUserById(userId) {
+
+    const result = await pool.query(
+        `
+        SELECT
+            id,
+            name,
+            first_name,
+            last_name,
+            email,
+            street,
+            postal_code,
+            city,
+            country,
+            role,
+            account_status,
+            created_at
+        FROM users
+        WHERE id = $1
+        `,
+        [userId]
+    );
+
+    if (result.rows.length === 0) {
+        return null;
+    }
+
+    return result.rows[0];
+}
+
+async function updateUser(
+    userId,
+    firstName,
+    lastName,
+    email,
+    street,
+    postalCode,
+    city,
+    country
+) {
+    const result = await pool.query(
+        `
+        UPDATE users
+        SET
+            name = $2,
+            first_name = $3,
+            last_name = $4,
+            email = $5,
+            street = $6,
+            postal_code = $7,
+            city = $8,
+            country = $9
+        WHERE id = $1
+        RETURNING
+            id,
+            name,
+            first_name,
+            last_name,
+            email,
+            street,
+            postal_code,
+            city,
+            country,
+            role,
+            created_at
+        `,
+        [
+            userId,
+            `${firstName} ${lastName}`,
+            firstName,
+            lastName,
+            email,
+            street,
+            postalCode,
+            city,
+            country
+        ]
+    );
+
+    if (result.rows.length === 0) {
+        return null;
+    }
+
+    const user = result.rows[0];
+
+    const token = jwt.sign(
+        {
+            id: user.id,
+            email: user.email,
+            role: user.role
+        },
+        config.jwtSecret,
+        {
+            expiresIn: "1h"
+        }
+    );
+
+    return {
+        ...user,
+        token: token
+    };
+}
+
+async function deleteUserAccount(userId) {
+    const deletedEmail =
+        `deleted-user-${userId}-${Date.now()}@demart.invalid`;
+
+    const result = await pool.query(
+        `
+        UPDATE users
+        SET
+            name = 'Deleted User',
+            first_name = 'Deleted',
+            last_name = 'User',
+            email = $1,
+            street = NULL,
+            postal_code = NULL,
+            city = NULL,
+            country = NULL,
+            role = 'CUSTOMER',
+            account_status = 'DELETED'
+        WHERE id = $2
+        RETURNING
+            id,
+            name,
+            email,
+            role,
+            created_at
+        `,
+        [
+            deletedEmail,
+            userId
+        ]
+    );
+
+    if (result.rows.length === 0) {
+        return null;
+    }
+
+    return result.rows[0];
+}
+
+async function updateUserRole(userId, newRole) {
+    const result = await pool.query(
+        `
+        UPDATE users
+        SET role = $1
+        WHERE id = $2
+        RETURNING
+            id,
+            name,
+            first_name,
+            last_name,
+            email,
+            street,
+            postal_code,
+            city,
+            country,
+            role,
+            created_at
+        `,
+        [newRole, userId]
+    );
+
+    if (result.rows.length === 0) {
+        return null;
+    }
+
+    return result.rows[0];
+}
+
+async function getAdminCount() {
+    const result = await pool.query(
+        `
+        SELECT COUNT(*)::int AS count
+        FROM users
+        WHERE role = 'ADMIN'
+        `
+    );
+
+    return result.rows[0].count;
+}
+
+async function getAllUsers() {
+    const result = await pool.query(
+        `
+        SELECT
+            id,
+            name,
+            first_name,
+            last_name,
+            email,
+            street,
+            postal_code,
+            city,
+            country,
+            role,
+            account_status,
+            created_at
+        FROM users
+        ORDER BY id
+        `
+    );
+
+    return result.rows;
+}
+
+module.exports = {
+    registerUser,
+    loginUser,
+    createPasswordResetToken,
+    resetPassword,
+    getUserById,
+    updateUser,
+    deleteUserAccount,
+    updateUserRole,
+    getAdminCount,
+    getAllUsers
+};
+===== backend/src/routes/productRoutes.js =====
+const express = require("express");
+
+const productController = require("../controllers/productController");
+const authMiddleware = require("../middleware/authMiddleware");
+const adminMiddleware = require("../middleware/adminMiddleware");
+
+const router = express.Router();
+
+router.get("/", productController.getAllProducts);
+
+router.get("/:id", productController.getProductById);
+
+router.post(
+    "/",
+    authMiddleware,
+    adminMiddleware,
+    productController.createProduct
+);
+
+router.put(
+    "/:id",
+    authMiddleware,
+    adminMiddleware,
+    productController.updateProduct
+);
+
+router.delete(
+    "/:id",
+    authMiddleware,
+    adminMiddleware,
+    productController.deleteProduct
+);
+
+module.exports = router;
+===== backend/src/controllers/productController.js =====
+const productService = require("../services/productService");
+
+async function getAllProducts(req, res) {
+
+    try {
+
+        const products = await productService.getAllProducts();
+
+        res.status(200).json({
+            products: products
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            message: "Failed to fetch products"
+        });
+
+    }
+}
+
+async function getProductById(req, res) {
+    const id = Number(req.params.id);
+
+    if (!Number.isSafeInteger(id) || id <= 0) {
+        return res.status(400).json({
+            message: "Product ID must be a positive integer"
+        });
+    }
+
+    try {
+        const product = await productService.getProductById(id);
+
+        if (!product) {
+            return res.status(404).json({
+                message: "Product not found"
+            });
+        }
+
+        res.status(200).json({
+            product: product
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            message: "Failed to fetch product"
+        });
+    }
+}
+
+async function createProduct(req, res) {
+    const name = req.body.name?.trim();
+    const category = req.body.category?.trim();
+    const description = req.body.description?.trim() || null;
+    const price = req.body.price;
+    const rating = req.body.rating ?? null;
+    const stockQuantity = req.body.stockQuantity;
+    const imageUrl = req.body.imageUrl?.trim() || null;
+
+    if (!name) {
+    return res.status(400).json({
+        message: "Name is required"
+    });
+}
+
+if (!category) {
+    return res.status(400).json({
+        message: "Category is required"
+    });
+}
+
+if (price === undefined || price === null) {
+    return res.status(400).json({
+        message: "Price is required"
+    });
+}
+
+    if (isNaN(price) || Number(price) < 0) {
+        return res.status(400).json({
+            message: "Price must be a valid non-negative number"
+        });
+    }
+
+    if (rating !== null && (isNaN(rating) || Number(rating) < 0 || Number(rating) > 5)) {
+        return res.status(400).json({
+            message: "Rating must be between 0 and 5"
+        });
+    }
+
+    if (stockQuantity === undefined || stockQuantity === null) {
+  return res.status(400).json({
+    message: "Stock quantity is required"
+  });
+}
+
+if (typeof stockQuantity !== "number" || Number.isNaN(stockQuantity)) {
+  return res.status(400).json({
+    message: "Stock quantity must be a number"
+  });
+}
+
+if (!Number.isInteger(stockQuantity)) {
+  return res.status(400).json({
+    message: "Stock quantity must be an integer"
+  });
+}
+
+if (stockQuantity < 0) {
+  return res.status(400).json({
+    message: "Stock quantity must be non-negative"
+  });
+}
+
+    try {
+
+        const existingProduct = await productService.checkProductNameExists(name);
+
+if (existingProduct) {
+    return res.status(409).json({
+        message: "A product with this name already exists"
+    });
+}
+        const product = await productService.createProduct(
+            name,
+            category,
+            description,
+            price,
+            rating,
+            stockQuantity,
+            imageUrl
+        );
+
+        res.status(201).json({
+            message: "Product created successfully",
+            product: product
+        });
+    } catch (error) {
+        console.error(error);
+
+        if (error.code === "23505") {
+            return res.status(409).json({
+                message: "A product with this name already exists"
+            });
+        }
+
+        res.status(500).json({
+            message: "Failed to create product"
+        });
+    }
+}
+
+async function updateProduct(req, res) {
+
+    const id = Number(req.params.id);
+
+    if (!Number.isSafeInteger(id) || id <= 0) {
+        return res.status(400).json({
+            message: "Product ID must be a positive integer"
+        });
+    }
+
+    const name = req.body.name?.trim();
+    const category = req.body.category?.trim();
+    const description = req.body.description?.trim() || null;
+    const price = req.body.price;
+    const rating = req.body.rating ?? null;
+    const stockQuantity = req.body.stockQuantity;
+    const imageUrl = req.body.imageUrl?.trim() || null;
+
+    if (!name) {
+        return res.status(400).json({
+            message: "Name is required"
+        });
+    }
+
+    if (!category) {
+        return res.status(400).json({
+            message: "Category is required"
+        });
+    }
+
+    if (price === undefined || price === null) {
+        return res.status(400).json({
+            message: "Price is required"
+        });
+    }
+
+    if (isNaN(price) || Number(price) < 0) {
+        return res.status(400).json({
+            message: "Price must be a valid non-negative number"
+        });
+    }
+
+    if (
+        rating !== null &&
+        (isNaN(rating) || Number(rating) < 0 || Number(rating) > 5)
+    ) {
+        return res.status(400).json({
+            message: "Rating must be between 0 and 5"
+        });
+    }
+
+    if (stockQuantity === undefined || stockQuantity === null) {
+        return res.status(400).json({
+            message: "Stock quantity is required"
+        });
+    }
+
+    if (typeof stockQuantity !== "number" || Number.isNaN(stockQuantity)) {
+        return res.status(400).json({
+            message: "Stock quantity must be a number"
+        });
+    }
+
+    if (!Number.isInteger(stockQuantity)) {
+        return res.status(400).json({
+            message: "Stock quantity must be an integer"
+        });
+    }
+
+    if (stockQuantity < 0) {
+        return res.status(400).json({
+            message: "Stock quantity must be non-negative"
+        });
+    }
+
+    try {
+
+        const existingProduct = await productService.checkProductNameExists(name);
+
+        if (existingProduct && existingProduct.id !== id) {
+            return res.status(409).json({
+                message: "A product with this name already exists"
+            });
+        }
+
+        const product = await productService.updateProduct(
+            id,
+            name,
+            category,
+            description,
+            price,
+            rating,
+            stockQuantity,
+            imageUrl
+        );
+
+        if (!product) {
+            return res.status(404).json({
+                message: "Product not found"
+            });
+        }
+
+        res.status(200).json({
+            message: "Product updated successfully",
+            product: product
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        if (error.code === "23505") {
+            return res.status(409).json({
+                message: "A product with this name already exists"
+            });
+        }
+
+        res.status(500).json({
+            message: "Failed to update product"
+        });
+
+        }
+}
+
+async function deleteProduct(req, res) {
+
+    const id = Number(req.params.id);
+
+    if (!Number.isSafeInteger(id) || id <= 0) {
+        return res.status(400).json({
+            message: "Product ID must be a positive integer"
+        });
+    }
+
+    try {
+
+        const product = await productService.deleteProduct(id);
+
+        if (!product) {
+            return res.status(404).json({
+                message: "Product not found"
+            });
+        }
+
+        res.status(200).json({
+            message: "Product deleted successfully",
+            product: product
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            message: "Failed to delete product"
+        });
+
+    }
+}
+
+module.exports = {
+    getAllProducts,
+    getProductById,
+    createProduct,
+    updateProduct,
+    deleteProduct
+};
+===== backend/src/services/productService.js =====
+const productRepository = require("../repositories/productRepository");
+
+async function getAllProducts() {
+    return await productRepository.findAllProducts();
+}
+
+async function getProductById(id) {
+    return await productRepository.findProductById(id);
+}
+
+async function checkProductNameExists(name) {
+
+    return await productRepository.findProductByName(name);
+
+}
+
+async function createProduct(
+    name,
+    category,
+    description,
+    price,
+    rating,
+    stockQuantity,
+    imageUrl
+) {
+    return await productRepository.createProduct(
+        name,
+        category,
+        description,
+        price,
+        rating,
+        stockQuantity,
+        imageUrl
+    );
+}
+
+async function updateProduct(
+    id,
+    name,
+    category,
+    description,
+    price,
+    rating,
+    stockQuantity,
+    imageUrl
+) {
+    return await productRepository.updateProduct(
+        id,
+        name,
+        category,
+        description,
+        price,
+        rating,
+        stockQuantity,
+        imageUrl
+    );
+}
+
+async function deleteProduct(id) {
+
+    return await productRepository.deleteProduct(id);
+
+}
+
+module.exports = {
+    getAllProducts,
+    getProductById,
+    checkProductNameExists,
+    createProduct,
+    updateProduct,
+    deleteProduct
+};
+===== backend/src/routes/orderRoutes.js =====
+const express = require("express");
+const orderController = require("../controllers/orderController");
+const authMiddleware = require("../middleware/authMiddleware");
+
+const router = express.Router();
+
+router.post("/", authMiddleware, orderController.createOrder);
+
+router.get("/", authMiddleware, orderController.getOrders);
+
+router.get("/:id", authMiddleware, orderController.getOrderById);
+
+module.exports = router;
+===== backend/src/controllers/orderController.js =====
+const orderService = require("../services/orderService");
+const paymentService = require("../services/paymentService");
+
+async function createOrder(req, res) {
+    let createdOrder = null;
+
+    try {
+        const userId = req.user.id;
+        const customerEmail = req.user.email;
+
+        const {
+            items,
+            shippingAddress,
+            deliveryMethod,
+            paymentMethod
+        } = req.body;
+
+        if (paymentMethod !== "card") {
+            return res.status(400).json({
+                message: "PayPal payments are not available yet. Please select Credit/Debit Card."
+            });
+        }
+
+        createdOrder = await orderService.createOrder(
+            userId,
+            items,
+            shippingAddress,
+            deliveryMethod,
+            paymentMethod
+        );
+
+        const idempotencyKey =
+            `demart-order-${createdOrder.order.id}`;
+
+        const paymentResult =
+    await paymentService.createCheckoutSession({
+        order: createdOrder.order,
+        items: createdOrder.items,
+        customerEmail,
+        idempotencyKey
+    });
+
+        return res.status(201).json({
+            order: createdOrder.order,
+            items: createdOrder.items,
+            payment: paymentResult
+        });
+    } catch (error) {
+        console.error("Create order error:", error);
+
+        if (createdOrder && createdOrder.order && createdOrder.order.id) {
+            try {
+                await orderService.updateOrderStatus(
+                    createdOrder.order.id,
+                    "CANCELLED"
+                );
+            } catch (cleanupError) {
+                console.error(
+                    "Failed to clean up order after payment setup failure:",
+                    cleanupError
+                );
+            }
+        }
+
+        if (error.statusCode) {
+            return res.status(error.statusCode).json({
+                message: error.message
+            });
+        }
+
+        return res.status(500).json({
+            message: "Unable to create order"
+        });
+    }
+}
+
+async function getOrders(req, res) {
+    try {
+        const orders = await orderService.getOrdersByUserId(
+            req.user.id
+        );
+
+        res.json({
+            orders
+        });
+    } catch (error) {
+        console.error("Get orders error:", error);
+
+        res.status(500).json({
+            message: "Failed to retrieve orders"
+        });
+    }
+}
+
+async function getOrderById(req, res) {
+    try {
+        const orderId = Number(req.params.id);
+
+        if (!Number.isInteger(orderId) || orderId <= 0) {
+            return res.status(400).json({
+                message: "Invalid order ID"
+            });
+        }
+
+        const result = await orderService.getOrderById(
+            orderId,
+            req.user.id
+        );
+
+        if (!result) {
+            return res.status(404).json({
+                message: "Order not found"
+            });
+        }
+
+        res.json(result);
+    } catch (error) {
+        console.error("Get order error:", error);
+
+        if (error.statusCode) {
+            return res.status(error.statusCode).json({
+                message: error.message
+            });
+        }
+
+        return res.status(500).json({
+            message: "Failed to retrieve order"
+        });
+    }
+}
+
+module.exports = {
+    createOrder,
+    getOrders,
+    getOrderById
+};
+
+===== backend/src/services/orderService.js =====
+const pool = require("../db/db");
+const AppError = require("../utils/appError");
+
+const orderRepository = require("../repositories/orderRepository");
+const productRepository = require("../repositories/productRepository");
+
+const inventoryReservationRepository = require(
+    "../repositories/inventoryReservationRepository"
+);
+
+const FREE_SHIPPING_THRESHOLD = 100;
+const STANDARD_SHIPPING_FEE = 4.99;
+const EXPRESS_SHIPPING_FEE = 9.99;
+
+const ALLOWED_DELIVERY_METHODS = [
+    "standard",
+    "express"
+];
+
+const ALLOWED_PAYMENT_METHODS = [
+    "card",
+    "paypal"
+];
+
+async function createOrder(
+    userId,
+    items,
+    shippingAddress,
+    deliveryMethod,
+    paymentMethod
+) {
+    if (!userId) {
+        throw new AppError("User ID is required", 400);
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+        throw new AppError("Order must contain at least one item", 400);
+    }
+
+    if (!shippingAddress || typeof shippingAddress !== "object") {
+        throw new AppError("Shipping address is required", 400);
+    }
+
+    const {
+        name,
+        street,
+        postalCode,
+        city,
+        country
+    } = shippingAddress;
+
+    if (
+        !name ||
+        !street ||
+        !postalCode ||
+        !city ||
+        !country
+    ) {
+        throw new AppError("Complete shipping address is required", 400);
+    }
+
+    if (!ALLOWED_DELIVERY_METHODS.includes(deliveryMethod)) {
+        throw new AppError("Invalid delivery method", 400);
+    }
+
+    if (!ALLOWED_PAYMENT_METHODS.includes(paymentMethod)) {
+        throw new AppError("Invalid payment method", 400);
+    }
+
+    const mergedItems = new Map();
+
+    for (const item of items) {
+        const { productId, quantity } = item;
+
+        if (
+            !Number.isInteger(Number(productId)) ||
+            Number(productId) <= 0 ||
+            !Number.isInteger(quantity) ||
+            quantity <= 0
+        ) {
+            throw new AppError("Invalid product or quantity", 400);
+        }
+
+        const normalizedProductId = Number(productId);
+
+        const existingQuantity =
+            mergedItems.get(normalizedProductId) || 0;
+
+        mergedItems.set(
+            normalizedProductId,
+            existingQuantity + quantity
+        );
+    }
+
+    const normalizedItems = Array.from(
+        mergedItems,
+        ([productId, quantity]) => ({
+            productId,
+            quantity
+        })
+    );
+
+    const client = await pool.connect();
+
+    try {
+        await client.query("BEGIN");
+
+        let subtotal = 0;
+
+        const orderItems = [];
+
+        for (const item of normalizedItems) {
+            const { productId, quantity } = item;
+
+            const product =
+                await productRepository.findProductById(productId);
+
+            if (!product) {
+                throw new AppError(
+                    `Product ${productId} not found or inactive`,
+                404
+                );
+            }
+
+            if (product.stock_quantity < quantity) {
+                throw new AppError(
+                    `Insufficient stock for product: ${product.name}`,
+                    409
+                );
+            }
+
+            const unitPrice = Number(product.price);
+
+            const itemTotal =
+                unitPrice * quantity;
+
+            subtotal += itemTotal;
+
+            orderItems.push({
+                productId: product.id,
+                productName: product.name,
+                quantity,
+                unitPrice
+            });
+        }
+
+        let shippingAmount;
+
+        if (deliveryMethod === "express") {
+            shippingAmount = EXPRESS_SHIPPING_FEE;
+        } else {
+            shippingAmount =
+                subtotal >= FREE_SHIPPING_THRESHOLD
+                    ? 0
+                    : STANDARD_SHIPPING_FEE;
+        }
+
+        const totalAmount =
+            subtotal + shippingAmount;
+
+        /*
+         * Every newly created order starts with PENDING payment
+         * status until the Stripe Checkout payment is completed.
+         */
+        const paymentStatus = "PENDING";
+
+        const order =
+            await orderRepository.createOrder(
+                client,
+                userId,
+                totalAmount,
+                shippingAmount,
+                {
+                    name: String(name).trim(),
+                    street: String(street).trim(),
+                    postalCode: String(postalCode).trim(),
+                    city: String(city).trim(),
+                    country: String(country).trim()
+                },
+                deliveryMethod,
+                paymentMethod,
+                paymentStatus
+            );
+
+        for (const item of orderItems) {
+
+            const reservation =
+
+                await inventoryReservationRepository.reserveInventory(
+
+                    client,
+
+                    order.id,
+
+                    item.productId,
+
+                    item.quantity
+
+                );
+
+            if (!reservation) {
+
+                throw new AppError(
+                    `Insufficient stock for product ID: ${item.productId}`,
+                    409
+                );
+
+            }
+
+            await orderRepository.createOrderItem(
+
+                client,
+
+                order.id,
+
+                item.productId,
+
+                item.quantity,
+
+                item.unitPrice
+
+            );
+
+        }
+
+        await client.query("COMMIT");
+
+        return {
+            order,
+            items: orderItems
+        };
+
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+
+    } finally {
+        client.release();
+    }
+}
+
+async function getOrdersByUserId(userId) {
+    if (!userId) {
+        throw new AppError("User ID is required", 400);
+    }
+
+    return await orderRepository.findOrdersByUserId(userId);
+}
+
+async function getOrderById(orderId, userId) {
+    if (!orderId) {
+        throw new AppError("Order ID is required", 400);
+    }
+
+    if (!userId) {
+        throw new AppError("User ID is required", 400);
+    }
+
+    const order =
+        await orderRepository.findOrderByIdAndUserId(
+            orderId,
+            userId
+        );
+
+    if (!order) {
+        throw new AppError("Order not found", 404);
+    }
+
+    const items =
+        await orderRepository.findOrderItemsByOrderId(
+            orderId
+        );
+
+    return {
+        order,
+        items
+    };
+}
+
+async function updateOrderStatus(orderId, newStatus) {
+    if (!orderId) {
+        throw new AppError("Order ID is required", 400);
+    }
+
+    if (!newStatus) {
+        throw new AppError("Order status is required", 400);
+    }
+
+    const allowedStatuses = [
+        "PENDING",
+        "CONFIRMED",
+        "PROCESSING",
+        "SHIPPED",
+        "DELIVERED",
+        "CANCELLED"
+    ];
+
+    if (!allowedStatuses.includes(newStatus)) {
+        throw new AppError("Invalid order status", 400);
+    }
+
+    const order =
+        await orderRepository.findOrderById(orderId);
+
+    if (!order) {
+        throw new AppError("Order not found", 404);
+    }
+
+    const allowedTransitions = {
+        PENDING: [
+            "CONFIRMED",
+            "CANCELLED"
+        ],
+
+        CONFIRMED: [
+            "PROCESSING",
+            "CANCELLED"
+        ],
+
+        PROCESSING: [
+            "SHIPPED"
+        ],
+
+        SHIPPED: [
+            "DELIVERED"
+        ],
+
+        DELIVERED: [],
+
+        CANCELLED: []
+    };
+
+    const currentStatus = order.status;
+
+    if (
+        !allowedTransitions[currentStatus]
+            .includes(newStatus)
+    ) {
+        throw new AppError(
+            `Invalid status transition: ${currentStatus} -> ${newStatus}`,
+            409
+        );
+    }
+
+    if (newStatus !== "CANCELLED") {
+        return await orderRepository.updateOrderStatus(
+            orderId,
+            newStatus
+        );
+    }
+
+    const client = await pool.connect();
+
+    try {
+        await client.query("BEGIN");
+
+        const reservations =
+            await inventoryReservationRepository.findActiveReservationsByOrderId(
+                orderId,
+                client
+            );
+
+        for (const reservation of reservations) {
+            await inventoryReservationRepository.releaseReservation(
+                client,
+                reservation.id
+            );
+        }
+
+        let updatedOrder;
+
+        if (order.payment_status === "PENDING") {
+            updatedOrder =
+                await orderRepository.updateOrderAndPaymentStatus(
+                    orderId,
+                    "CANCELLED",
+                    "CANCELLED",
+                    client
+                );
+        } else {
+            updatedOrder =
+                await orderRepository.updateOrderStatus(
+                    orderId,
+                    "CANCELLED",
+                    client
+                );
+        }
+
+        await client.query("COMMIT");
+
+        return updatedOrder;
+    } catch (error) {
+        try {
+            await client.query("ROLLBACK");
+        } catch {}
+
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
+module.exports = {
+    createOrder,
+    getOrdersByUserId,
+    getOrderById,
+    updateOrderStatus
+};
+===== backend/src/routes/paymentRoutes.js =====
+const express = require("express");
+
+const paymentController = require("../controllers/paymentController");
+
+const authMiddleware = require("../middleware/authMiddleware");
+
+const router = express.Router();
+
+router.post(
+    "/webhook",
+    express.raw({ type: "application/json" }),
+    paymentController.handleStripeWebhook
+);
+
+router.post(
+    "/cancel",
+    express.json(),
+    authMiddleware,
+    paymentController.cancelCheckout
+);
+
+module.exports = router;
+===== backend/src/controllers/paymentController.js =====
+const Stripe = require("stripe");
+
+const config = require("../config");
+const pool = require("../db/db");
+const paymentRepository = require("../repositories/paymentRepository");
+const paymentService = require("../services/paymentService");
+const orderRepository = require("../repositories/orderRepository");
+
+const stripe = new Stripe(config.stripe.secretKey);
+const PAYMENT_PROVIDER = "STRIPE";
+
+async function handleStripeWebhook(req, res) {
+    if (!config.stripe.webhookSecret) {
+        return res.status(503).json({
+            message: "Stripe webhook secret is not configured"
+        });
+    }
+
+    const signature = req.headers["stripe-signature"];
+
+    if (!signature) {
+        return res.status(400).json({
+            message: "Missing Stripe signature"
+        });
+    }
+
+    let event;
+
+    try {
+        event = stripe.webhooks.constructEvent(
+            req.body,
+            signature,
+            config.stripe.webhookSecret
+        );
+    } catch (error) {
+        console.error(
+            "Stripe webhook signature verification failed:",
+            error.message
+        );
+
+        return res.status(400).json({
+            message: "Invalid Stripe webhook signature"
+        });
+    }
+
+    const client = await pool.connect();
+
+    try {
+        await client.query("BEGIN");
+
+        let webhookEvent =
+            await paymentRepository.createWebhookEvent(
+                client,
+                PAYMENT_PROVIDER,
+                event.id,
+                event.type
+            );
+
+        if (!webhookEvent) {
+            webhookEvent =
+                await paymentRepository.findWebhookEvent(
+                    client,
+                    PAYMENT_PROVIDER,
+                    event.id,
+                    true
+                );
+
+            if (
+                webhookEvent &&
+                webhookEvent.processed_at
+            ) {
+                await client.query("COMMIT");
+
+                return res.status(200).json({
+                    received: true,
+                    duplicate: true
+                });
+            }
+        }
+
+        if (!webhookEvent) {
+            throw new Error(
+                "Unable to record Stripe webhook event"
+            );
+        }
+
+        switch (event.type) {
+            case "checkout.session.completed": {
+                const session = event.data.object;
+
+                const paymentId =
+                    session.metadata &&
+                    session.metadata.paymentId;
+
+                if (!paymentId) {
+                    throw new Error(
+                        "Stripe Checkout Session is missing payment ID metadata"
+                    );
+                }
+
+                if (!session.payment_intent) {
+                    throw new Error(
+                        "Stripe Checkout Session is missing payment intent"
+                    );
+                }
+
+                const amountReceived =
+                    Number(session.amount_total) / 100;
+
+                const currency =
+                    String(session.currency || "").toUpperCase();
+
+                await paymentService.completeStripePayment({
+                    paymentId,
+                    paymentIntentId: session.payment_intent,
+                    amount: amountReceived,
+                    currency,
+                    client
+                });
+
+                break;
+            }
+
+            case "payment_intent.payment_failed": {
+    const paymentIntent = event.data.object;
+
+    const payment =
+        await paymentRepository.findPaymentByPaymentIntentId(
+            PAYMENT_PROVIDER,
+            paymentIntent.id
+        );
+
+    if (!payment) {
+        /*
+         * A failed PaymentIntent may occur before our database
+         * has recorded the PaymentIntent ID. Do not fail the
+         * entire webhook transaction for an event that cannot
+         * currently be correlated.
+         */
+        console.warn(
+            `No payment found for failed Stripe payment intent ${paymentIntent.id}`
+        );
+        break;
+    }
+
+    /*
+     * A failed payment attempt does not necessarily mean that
+     * the Checkout Session has failed permanently. The customer
+     * may retry payment within the same Checkout Session.
+     *
+     * Therefore we record the failure details but keep the
+     * payment/order pending and keep the inventory reservation.
+     */
+    const failureCode =
+        paymentIntent.last_payment_error &&
+        paymentIntent.last_payment_error.code
+            ? paymentIntent.last_payment_error.code
+            : null;
+
+    const failureMessage =
+        paymentIntent.last_payment_error &&
+        paymentIntent.last_payment_error.message
+            ? paymentIntent.last_payment_error.message
+            : null;
+
+    if (payment.provider_payment_intent_id !== paymentIntent.id) {
+        await paymentRepository.updateStripePaymentIntent(
+            client,
+            payment.id,
+            paymentIntent.id
+        );
+    }
+
+    if (failureCode || failureMessage) {
+        await paymentRepository.updatePaymentFailureDetails(
+            client,
+            payment.id,
+            failureCode,
+            failureMessage
+        );
+    }
+
+    break;
+}
+
+            case "checkout.session.expired": {
+                const session = event.data.object;
+
+                const paymentId =
+                    session.metadata &&
+                    session.metadata.paymentId;
+
+                if (!paymentId) {
+                    throw new Error(
+                        "Expired Stripe Checkout Session is missing payment ID metadata"
+                    );
+                }
+
+                await paymentService.failStripePayment({
+                    paymentId,
+                    status: "CANCELLED",
+                    failureCode: "checkout_session_expired",
+                    failureMessage:
+                        "Stripe Checkout Session expired",
+                    client
+                });
+
+                break;
+            }
+
+            default:
+                break;
+        }
+
+        const processed =
+            await paymentRepository.markWebhookEventProcessed(
+                client,
+                webhookEvent.id
+            );
+
+        if (!processed) {
+            throw new Error(
+                "Failed to mark Stripe webhook event as processed"
+            );
+        }
+
+        await client.query("COMMIT");
+
+        return res.status(200).json({
+            received: true
+        });
+    } catch (error) {
+        try {
+            await client.query("ROLLBACK");
+        } catch (rollbackError) {
+            console.error(
+                "Stripe webhook rollback error:",
+                rollbackError
+            );
+        }
+
+        console.error(
+            "Stripe webhook processing error:",
+            error
+        );
+
+        return res.status(500).json({
+            message: "Webhook processing failed"
+        });
+    } finally {
+        client.release();
+    }
+}
+
+async function cancelCheckout(req, res) {
+    try {
+        const orderId = Number(req.body.orderId);
+
+        if (!Number.isInteger(orderId) || orderId <= 0) {
+            return res.status(400).json({
+                message: "Invalid order ID"
+            });
+        }
+
+        const order =
+            await orderRepository.findOrderByIdAndUserId(
+                orderId,
+                req.user.id
+            );
+
+        if (!order) {
+            return res.status(404).json({
+                message: "Order not found"
+            });
+        }
+
+        if (
+            !["PENDING", "PROCESSING"].includes(
+                order.payment_status
+            )
+        ) {
+            return res.status(409).json({
+                message:
+                    `Payment cannot be cancelled from status: ${order.payment_status}`,
+                paymentStatus: order.payment_status
+            });
+        }
+
+        const payments =
+            await paymentRepository.findPaymentByOrderId(
+                orderId
+            );
+
+        if (!payments || payments.length === 0) {
+            return res.status(404).json({
+                message: "Payment not found"
+            });
+        }
+
+        const payment = payments[0];
+
+        if (!payment.provider_checkout_session_id) {
+            return res.status(409).json({
+                message: "Stripe Checkout Session not found"
+            });
+        }
+
+        const result =
+            await paymentService.expireStripeCheckoutSession({
+                paymentId: payment.id,
+                checkoutSessionId:
+                    payment.provider_checkout_session_id
+            });
+
+        return res.status(200).json({
+            message: result.alreadyCompleted
+                ? "Payment is already completed or cancelled"
+                : "Stripe Checkout Session expired",
+            paymentStatus: result.payment.status,
+            checkoutSessionStatus:
+                result.checkoutSessionStatus || null,
+            alreadyCompleted: result.alreadyCompleted
+        });
+    } catch (error) {
+        console.error("Cancel checkout error:", error);
+
+        return res.status(400).json({
+            message: error.message
+        });
+    }
+}
+
+module.exports = {
+    handleStripeWebhook,
+    cancelCheckout
+};
+===== backend/src/services/paymentService.js =====
+const Stripe = require("stripe");
+const config = require("../config");
+const pool = require("../db/db");
+const paymentRepository = require("../repositories/paymentRepository");
+const orderRepository = require("../repositories/orderRepository");
+const inventoryReservationRepository = require(
+    "../repositories/inventoryReservationRepository"
+);
+
+const stripe = new Stripe(config.stripe.secretKey);
+
+const PAYMENT_PROVIDER = "STRIPE";
+const PAYMENT_CURRENCY = "EUR";
+
+async function createCheckoutSession({
+    order,
+    items,
+    customerEmail,
+    idempotencyKey
+}) {
+    if (!order || !order.id) {
+        throw new Error("Order is required");
+    }
+
+    if (!items || items.length === 0) {
+        throw new Error("Order items are required");
+    }
+
+    if (!customerEmail) {
+        throw new Error("Customer email is required");
+    }
+
+    const orderAmount = Number(order.total_amount);
+
+    if (!Number.isFinite(orderAmount) || orderAmount <= 0) {
+        throw new Error("Invalid order amount");
+    }
+
+    const lineItems = items.map((item) => {
+        const unitPrice = Number(item.unitPrice);
+
+        if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
+            throw new Error(
+                `Invalid unit price for product ${item.productId}`
+            );
+        }
+
+        if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+            throw new Error(
+                `Invalid quantity for product ${item.productId}`
+            );
+        }
+
+        return {
+            price_data: {
+                currency: PAYMENT_CURRENCY.toLowerCase(),
+                product_data: {
+                    name:
+                        item.productName ||
+                        `Product ${item.productId}`
+                },
+                unit_amount: Math.round(unitPrice * 100)
+            },
+            quantity: item.quantity
+        };
+    });
+
+    if (Number(order.shipping_amount) > 0) {
+        lineItems.push({
+            price_data: {
+                currency: PAYMENT_CURRENCY.toLowerCase(),
+                product_data: {
+                    name:
+                        order.delivery_method === "express"
+                            ? "Express Shipping"
+                            : "Standard Shipping"
+                },
+                unit_amount: Math.round(
+                    Number(order.shipping_amount) * 100
+                )
+            },
+            quantity: 1
+        });
+    }
+
+    const client = await pool.connect();
+
+    try {
+        await client.query("BEGIN");
+
+        const payment = await paymentRepository.createPayment(
+            client,
+            {
+                orderId: order.id,
+                provider: PAYMENT_PROVIDER,
+                amount: orderAmount,
+                currency: PAYMENT_CURRENCY,
+                status: "PENDING",
+                idempotencyKey: idempotencyKey || null
+            }
+        );
+
+        let checkoutSession;
+
+        try {
+            checkoutSession = await stripe.checkout.sessions.create(
+                {
+                    mode: "payment",
+                    line_items: lineItems,
+                    customer_email: customerEmail,
+                    client_reference_id: String(order.id),
+                    metadata: {
+                        orderId: String(order.id),
+                        userId: String(order.user_id),
+                        paymentId: String(payment.id)
+                    },
+                    
+                    payment_intent_data: {
+                        metadata: {
+                            orderId: String(order.id),
+                            userId: String(order.user_id),
+                            paymentId: String(payment.id)
+                        }
+                    },
+                    success_url:
+                        `${config.frontendUrl}/pages/order-confirmation.html` +
+                        `?orderId=${order.id}` +
+                        `&session_id={CHECKOUT_SESSION_ID}`,
+                    cancel_url:
+                        `${config.frontendUrl}/pages/checkout.html` +
+                        `?payment=cancelled` +
+                        `&orderId=${order.id}`,
+                    payment_method_types: ["card"]
+                },
+                idempotencyKey
+                    ? { idempotencyKey }
+                    : undefined
+            );
+        } catch (error) {
+            await client.query("ROLLBACK");
+            throw error;
+        }
+
+        await paymentRepository.updateStripeCheckoutSession(
+            client,
+            payment.id,
+            checkoutSession.id
+        );
+
+        await client.query("COMMIT");
+
+        return {
+            paymentId: payment.id,
+            checkoutSessionId: checkoutSession.id,
+            checkoutUrl: checkoutSession.url
+        };
+    } catch (error) {
+        try {
+            await client.query("ROLLBACK");
+        } catch (rollbackError) {
+            console.error(
+                "Payment transaction rollback error:",
+                rollbackError
+            );
+        }
+
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
+async function completeStripePayment({
+    paymentId,
+    paymentIntentId,
+    amount,
+    currency = PAYMENT_CURRENCY,
+    client: providedClient = null
+}) {
+    if (!paymentId) {
+        throw new Error("Payment ID is required");
+    }
+
+    if (!paymentIntentId) {
+        throw new Error("Stripe payment intent ID is required");
+    }
+
+    const normalizedCurrency = String(currency).toUpperCase();
+
+    const client = providedClient || await pool.connect();
+    const ownsTransaction = !providedClient;
+
+    try {
+        if (ownsTransaction) {
+            await client.query("BEGIN");
+        }
+
+        const payment = await paymentRepository.findPaymentById(
+            paymentId,
+            client
+        );
+
+        if (!payment) {
+            throw new Error("Payment not found");
+        }
+
+        if (payment.provider !== PAYMENT_PROVIDER) {
+            throw new Error("Invalid payment provider");
+        }
+
+        if (payment.status === "PAID") {
+            if (ownsTransaction) {
+                await client.query("COMMIT");
+            }
+
+            return {
+                payment,
+                alreadyCompleted: true
+            };
+        }
+
+        if (!["PENDING", "PROCESSING"].includes(payment.status)) {
+            throw new Error(
+                `Payment cannot be completed from status: ${payment.status}`
+            );
+        }
+
+        const paymentAmount = Number(payment.amount);
+        const receivedAmount = Number(amount);
+
+        if (
+            !Number.isFinite(receivedAmount) ||
+            receivedAmount <= 0
+        ) {
+            throw new Error("Invalid payment amount");
+        }
+
+        if (paymentAmount !== receivedAmount) {
+            throw new Error("Payment amount mismatch");
+        }
+
+        if (payment.currency !== normalizedCurrency) {
+            throw new Error("Payment currency mismatch");
+        }
+
+        const orderAmount = Number(payment.amount);
+
+        if (!Number.isFinite(orderAmount) || orderAmount <= 0) {
+            throw new Error("Invalid stored payment amount");
+        }
+
+        const reservations =
+            await inventoryReservationRepository.findActiveReservationsByOrderId(
+                payment.order_id,
+                client
+            );
+
+        if (reservations.length === 0) {
+            throw new Error(
+                "No active inventory reservations found for payment"
+            );
+        }
+
+        await paymentRepository.updateStripePaymentIntent(
+            client,
+            payment.id,
+            paymentIntentId
+        );
+
+        const updatedPayment =
+            await paymentRepository.updatePaymentStatus(
+                client,
+                payment.id,
+                "PAID"
+            );
+
+        if (!updatedPayment) {
+            throw new Error("Failed to update payment status");
+        }
+
+        const updatedOrder =
+            await orderRepository.updateOrderAndPaymentStatus(
+                payment.order_id,
+                "CONFIRMED",
+                "PAID",
+                client
+            );
+
+        if (!updatedOrder) {
+            throw new Error("Failed to update order payment status");
+        }
+
+        const consumedReservations = [];
+
+        for (const reservation of reservations) {
+            const consumed =
+                await inventoryReservationRepository.consumeReservation(
+                    client,
+                    reservation.id
+                );
+
+            if (!consumed) {
+                throw new Error(
+                    `Failed to consume inventory reservation ${reservation.id}`
+                );
+            }
+
+            consumedReservations.push(consumed);
+        }
+
+        if (ownsTransaction) {
+    await client.query("COMMIT");
+}
+
+return {
+    payment: updatedPayment,
+    order: updatedOrder,
+    reservations: consumedReservations,
+    alreadyCompleted: false,
+    paymentIntentId
+};  
+    } catch (error) {
+        if (ownsTransaction) {
+    try {
+        await client.query("ROLLBACK");
+    } catch (rollbackError) {
+        console.error(
+            "Payment completion rollback error:",
+            rollbackError
+        );
+    }
+}
+
+        throw error;
+    } finally {
+    if (!providedClient) {
+        client.release();
+    }
+}
+}
+
+async function failStripePayment({
+    paymentId,
+    paymentIntentId = null,
+    status = "FAILED",
+    failureCode = null,
+    failureMessage = null,
+    client: providedClient = null
+}) {
+    if (!paymentId) {
+        throw new Error("Payment ID is required");
+    }
+
+    const allowedStatuses = ["FAILED", "CANCELLED"];
+
+    if (!allowedStatuses.includes(status)) {
+        throw new Error("Invalid payment failure status");
+    }
+
+    const client = providedClient || await pool.connect();
+const ownsTransaction = !providedClient;
+
+try {
+    if (ownsTransaction) {
+        await client.query("BEGIN");
+    }
+
+        const payment = await paymentRepository.findPaymentById(
+            paymentId,
+            client
+        );
+
+        if (!payment) {
+            throw new Error("Payment not found");
+        }
+
+        if (payment.provider !== PAYMENT_PROVIDER) {
+            throw new Error("Invalid payment provider");
+        }
+
+        if (payment.status === "PAID") {
+            throw new Error(
+                "A paid payment cannot be marked as failed or cancelled"
+            );
+        }
+
+        if (payment.status === status) {
+    if (ownsTransaction) {
+        await client.query("COMMIT");
+    }
+
+    return {
+        payment,
+        alreadyCompleted: true
+    };
+}
+
+        if (!["PENDING", "PROCESSING"].includes(payment.status)) {
+            throw new Error(
+                `Payment cannot be failed from status: ${payment.status}`
+            );
+        }
+
+        if (paymentIntentId) {
+            await paymentRepository.updateStripePaymentIntent(
+                client,
+                payment.id,
+                paymentIntentId
+            );
+        }
+
+        const activeReservations =
+            await inventoryReservationRepository.findActiveReservationsByOrderId(
+                payment.order_id,
+                client
+            );
+
+        const updatedPayment =
+            await paymentRepository.updatePaymentStatus(
+                client,
+                payment.id,
+                status,
+                failureCode,
+                failureMessage
+            );
+
+        if (!updatedPayment) {
+            throw new Error("Failed to update payment status");
+        }
+
+        let updatedOrder;
+
+        if (status === "CANCELLED") {
+            updatedOrder =
+                await orderRepository.updateOrderAndPaymentStatus(
+                    payment.order_id,
+                    "CANCELLED",
+                    "CANCELLED",
+                    client
+                );
+        } else {
+            updatedOrder =
+                await orderRepository.updatePaymentStatus(
+                    payment.order_id,
+                    status,
+                    client
+                );
+        }
+
+        if (!updatedOrder) {
+            throw new Error("Failed to update order payment status");
+        }
+
+        const releasedReservations = [];
+
+        for (const reservation of activeReservations) {
+            const released =
+                await inventoryReservationRepository.releaseReservation(
+                    client,
+                    reservation.id
+                );
+
+            if (!released) {
+                throw new Error(
+                    `Failed to release inventory reservation ${reservation.id}`
+                );
+            }
+
+            releasedReservations.push(released);
+        }
+
+        if (ownsTransaction) {
+    await client.query("COMMIT");
+}
+
+return {
+    payment: updatedPayment,
+    order: updatedOrder,
+    reservations: releasedReservations,
+    alreadyCompleted: false
+};
+    } catch (error) {
+        if (ownsTransaction) {
+    try {
+        await client.query("ROLLBACK");
+    } catch (rollbackError) {
+        console.error(
+            "Payment failure rollback error:",
+            rollbackError
+        );
+    }
+}
+
+        throw error;
+    } finally {
+    if (!providedClient) {
+        client.release();
+    }
+}
+}
+
+async function expireStripeCheckoutSession({
+    paymentId,
+    checkoutSessionId
+}) {
+    if (!paymentId) {
+        throw new Error("Payment ID is required");
+    }
+
+    if (!checkoutSessionId) {
+        throw new Error("Stripe Checkout Session ID is required");
+    }
+
+    const payment = await paymentRepository.findPaymentById(
+        paymentId
+    );
+
+    if (!payment) {
+        throw new Error("Payment not found");
+    }
+
+    if (payment.provider !== PAYMENT_PROVIDER) {
+        throw new Error("Invalid payment provider");
+    }
+
+    if (
+        payment.provider_checkout_session_id !==
+        checkoutSessionId
+    ) {
+        throw new Error("Invalid Stripe Checkout Session");
+    }
+
+    if (payment.status === "PAID") {
+        throw new Error(
+            "A paid payment cannot be cancelled"
+        );
+    }
+
+    if (!["PENDING", "PROCESSING"].includes(payment.status)) {
+        return {
+            payment,
+            alreadyCompleted: true
+        };
+    }
+
+    const checkoutSession =
+        await stripe.checkout.sessions.expire(
+            checkoutSessionId
+        );
+
+    return {
+        payment,
+        checkoutSessionId: checkoutSession.id,
+        checkoutSessionStatus: checkoutSession.status,
+        alreadyCompleted: false
+    };
+}
+
+module.exports = {
+    createCheckoutSession,
+    completeStripePayment,
+    failStripePayment,
+    expireStripeCheckoutSession
+};
+
+===== backend/src/routes/adminUserRoutes.js =====
+const express = require("express");
+
+const adminUserController = require("../controllers/adminUserController");
+const authMiddleware = require("../middleware/authMiddleware");
+const adminMiddleware = require("../middleware/adminMiddleware");
+
+const router = express.Router();
+
+router.get(
+    "/",
+    authMiddleware,
+    adminMiddleware,
+    adminUserController.getAllUsers
+);
+
+router.patch(
+    "/:id/role",
+    authMiddleware,
+    adminMiddleware,
+    adminUserController.updateUserRole
+);
+
+module.exports = router;
+===== backend/src/controllers/adminUserController.js =====
+const authService = require("../services/authService");
+
+async function updateUserRole(req, res) {
+    const userId = req.params.id;
+    const { role } = req.body;
+
+    if (!role) {
+        return res.status(400).json({
+            message: "Role is required"
+        });
+    }
+
+    const allowedRoles = ["ADMIN", "CUSTOMER"];
+
+    if (!allowedRoles.includes(role)) {
+        return res.status(400).json({
+            message: "Invalid role"
+        });
+    }
+
+    if (!Number.isInteger(Number(userId)) || Number(userId) <= 0) {
+        return res.status(400).json({
+            message: "Invalid user ID"
+        });
+    }
+
+    const targetUserId = Number(userId);
+
+    try {
+        const targetUser = await authService.getUserById(targetUserId);
+
+        if (!targetUser) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        if (targetUserId === req.user.id) {
+            return res.status(400).json({
+                message: "Administrators cannot change their own role"
+            });
+        }
+
+        if (
+            targetUser.role === "ADMIN" &&
+            role === "CUSTOMER"
+        ) {
+            const adminCount =
+                await authService.getAdminCount();
+
+            if (adminCount <= 1) {
+                return res.status(400).json({
+                    message: "Cannot remove the last administrator"
+                });
+            }
+        }
+
+        const user = await authService.updateUserRole(
+            targetUserId,
+            role
+        );
+
+        res.status(200).json({
+            message: "User role updated successfully",
+            user: user
+        });
+
+    } catch (error) {
+        console.error("Failed to update user role:", error);
+
+        res.status(500).json({
+            message: "Failed to update user role"
+        });
+    }
+}
+
+async function getAllUsers(req, res) {
+    try {
+        const users = await authService.getAllUsers();
+
+        res.status(200).json({
+            users: users
+        });
+
+    } catch (error) {
+        console.error("Failed to get users:", error);
+
+        res.status(500).json({
+            message: "Failed to retrieve users"
+        });
+    }
+}
+
+module.exports = {
+    getAllUsers,
+    updateUserRole
+};
+===== backend/src/routes/adminOrderRoutes.js =====
+const express = require("express");
+
+const adminOrderController =
+    require("../controllers/adminOrderController");
+
+const authMiddleware =
+    require("../middleware/authMiddleware");
+
+const adminMiddleware =
+    require("../middleware/adminMiddleware");
+
+const router = express.Router();
+
+router.get(
+    "/",
+    authMiddleware,
+    adminMiddleware,
+    adminOrderController.getAllOrders
+);
+
+router.patch(
+    "/:id/status",
+    authMiddleware,
+    adminMiddleware,
+    adminOrderController.updateOrderStatus
+);
+
+module.exports = router;
+===== backend/src/controllers/adminOrderController.js =====
+const orderService = require("../services/orderService");
+const orderRepository = require("../repositories/orderRepository");
+
+async function getAllOrders(req, res) {
+    try {
+        const orders = await orderRepository.findAllOrders();
+
+        res.status(200).json({
+            orders
+        });
+    } catch (error) {
+        console.error("Failed to retrieve admin orders:", error);
+
+        res.status(500).json({
+            message: "Failed to retrieve orders"
+        });
+    }
+}
+
+async function updateOrderStatus(req, res) {
+
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+
+        const order =
+            await orderService.updateOrderStatus(
+                id,
+                status
+            );
+
+        res.status(200).json({
+            message: "Order status updated successfully",
+            order
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Failed to update order status:",
+            error
+        );
+
+        if (
+            error.message === "Order not found"
+        ) {
+            return res.status(404).json({
+                message: error.message
+            });
+        }
+
+        res.status(400).json({
+            message: error.message
+        });
+    }
+}
+
+module.exports = {
+    getAllOrders,
+    updateOrderStatus
+};
+===== backend/src/routes/locationRoutes.js =====
+const express = require("express");
+const locationController = require("../controllers/locationController");
+
+const router = express.Router();
+
+router.get("/countries", locationController.getCountries);
+
+router.get("/regions", locationController.getRegions);
+
+router.get("/cities", locationController.getCities);
+
+module.exports = router;
+===== backend/src/controllers/locationController.js =====
+const locationService = require("../services/locationService");
+
+async function getCountries(req, res) {
+    try {
+        const countries = await locationService.getCountries();
+
+        res.json({
+            countries
+        });
+    } catch (error) {
+        console.error("Get countries error:", error);
+
+        res.status(500).json({
+            message: "Failed to load countries"
+        });
+    }
+}
+
+async function getRegions(req, res) {
+    try {
+        const { country } = req.query;
+
+        if (!country) {
+            return res.status(400).json({
+                message: "Country is required"
+            });
+        }
+
+        const regions = await locationService.getRegions(country);
+
+        res.json({
+            regions
+        });
+    } catch (error) {
+        console.error("Get regions error:", error);
+
+        res.status(500).json({
+            message: "Failed to load regions"
+        });
+    }
+}
+
+async function getCities(req, res) {
+    try {
+        const { country, region } = req.query;
+
+        if (!country || !region) {
+            return res.status(400).json({
+                message: "Country and region are required"
+            });
+        }
+
+        const cities = await locationService.getCities(
+            country,
+            region
+        );
+
+        res.json({
+            cities
+        });
+    } catch (error) {
+        console.error("Get cities error:", error);
+
+        res.status(500).json({
+            message: "Failed to load cities"
+        });
+    }
+}
+
+module.exports = {
+    getCountries,
+    getRegions,
+    getCities
+};
+===== backend/src/routes/storeRoutes.js =====
+const express = require("express");
+const storeController = require("../controllers/storeController");
+
+const router = express.Router();
+
+router.get("/", storeController.getStoresByLocation);
+
+module.exports = router;
+===== backend/src/controllers/storeController.js =====
+const storeService = require("../services/storeService");
+
+async function getStoresByLocation(req, res) {
+    try {
+        const { locationId } = req.query;
+
+        if (!locationId) {
+            return res.status(400).json({
+                message: "Location ID is required"
+            });
+        }
+
+        const stores = await storeService.getStoresByLocation(locationId);
+
+        res.json({
+            stores
+        });
+    } catch (error) {
+        console.error("Get stores error:", error);
+
+        res.status(500).json({
+            message: "Failed to load stores"
+        });
+    }
+}
+
+module.exports = {
+    getStoresByLocation
+};

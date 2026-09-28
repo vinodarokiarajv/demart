@@ -10,7 +10,20 @@ async function getStoresByLocation(req, res) {
             });
         }
 
-        const stores = await storeService.getStoresByLocation(locationId);
+        if (!/^\d+$/.test(locationId) || Number(locationId) <= 0) {
+
+            return res.status(400).json({
+
+                message: "Location ID must be a positive integer"
+
+            });
+
+        }
+
+        const stores =
+            await storeService.getStoresByLocation(
+                Number(locationId)
+            );
 
         res.json({
             stores

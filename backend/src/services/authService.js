@@ -10,51 +10,63 @@ async function registerUser(
     lastName,
     email,
     password,
+    phone,
     street,
     postalCode,
     city,
-    country
+    country,
+    addressLine2,
+    landmark
 ) {
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const result = await pool.query(
-        `INSERT INTO users
-            (
-                name,
-                first_name,
-                last_name,
-                email,
-                password_hash,
-                street,
-                postal_code,
-                city,
-                country
-            )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
-         RETURNING
-            id,
+const result = await pool.query(
+    `INSERT INTO users
+        (
+            name,
             first_name,
             last_name,
             email,
+            password_hash,
+            phone,
             street,
             postal_code,
             city,
             country,
-            created_at`,
-        [
-            `${firstName} ${lastName}`,
-            firstName,
-            lastName,
-            email,
-            passwordHash,
-            street,
-            postalCode,
-            city,
-            country
-        ]
-    );
+            address_line_2,
+            landmark
+        )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+     RETURNING
+        id,
+        first_name,
+        last_name,
+        email,
+        phone,
+        street,
+        postal_code,
+        city,
+        country,
+        address_line_2,
+        landmark,
+        created_at`,
+    [
+        `${firstName} ${lastName}`,
+        firstName,
+        lastName,
+        email,
+        passwordHash,
+        phone,
+        street,
+        postalCode,
+        city,
+        country,
+        addressLine2,
+        landmark
+    ]
+);
 
-    return result.rows[0];
+return result.rows[0];
 }
 
 async function loginUser(email, password) {
@@ -67,10 +79,13 @@ async function loginUser(email, password) {
             last_name,
             email,
             password_hash,
+            phone,
             street,
             postal_code,
             city,
             country,
+            address_line_2,
+            landmark,
             role,
             account_status,
             created_at
@@ -116,10 +131,13 @@ async function loginUser(email, password) {
         first_name: user.first_name,
         last_name: user.last_name,
         email: user.email,
+        phone: user.phone,
         street: user.street,
         postal_code: user.postal_code,
         city: user.city,
         country: user.country,
+        address_line_2: user.address_line_2,
+        landmark: user.landmark,
         role: user.role,
         created_at: user.created_at,
         token: token
@@ -283,10 +301,13 @@ async function getUserById(userId) {
             first_name,
             last_name,
             email,
+            phone,
             street,
             postal_code,
             city,
             country,
+            address_line_2,
+            landmark,
             role,
             account_status,
             created_at
@@ -308,49 +329,61 @@ async function updateUser(
     firstName,
     lastName,
     email,
+    phone,
     street,
     postalCode,
     city,
-    country
+    country,
+    addressLine2,
+    landmark
 ) {
     const result = await pool.query(
-        `
-        UPDATE users
-        SET
-            name = $2,
-            first_name = $3,
-            last_name = $4,
-            email = $5,
-            street = $6,
-            postal_code = $7,
-            city = $8,
-            country = $9
-        WHERE id = $1
-        RETURNING
-            id,
-            name,
-            first_name,
-            last_name,
-            email,
-            street,
-            postal_code,
-            city,
-            country,
-            role,
-            created_at
-        `,
-        [
-            userId,
-            `${firstName} ${lastName}`,
-            firstName,
-            lastName,
-            email,
-            street,
-            postalCode,
-            city,
-            country
-        ]
-    );
+    `
+    UPDATE users
+    SET
+        name = $2,
+        first_name = $3,
+        last_name = $4,
+        email = $5,
+        phone = $6,
+        street = $7,
+        postal_code = $8,
+        city = $9,
+        country = $10,
+        address_line_2 = $11,
+        landmark = $12
+    WHERE id = $1
+    RETURNING
+        id,
+        name,
+        first_name,
+        last_name,
+        email,
+        phone,
+        street,
+        postal_code,
+        city,
+        country,
+        address_line_2,
+        landmark,
+        role,
+        created_at
+    `,
+    [
+        userId,
+        `${firstName} ${lastName}`,
+        firstName,
+        lastName,
+        email,
+        phone,
+        street,
+        postalCode,
+        city,
+        country,
+        addressLine2,
+        landmark
+    ]
+);
 
     if (result.rows.length === 0) {
         return null;
@@ -388,10 +421,13 @@ async function deleteUserAccount(userId) {
             first_name = 'Deleted',
             last_name = 'User',
             email = $1,
+            phone = NULL,
             street = NULL,
             postal_code = NULL,
             city = NULL,
             country = NULL,
+            address_line_2 = NULL,
+            landmark = NULL,
             role = 'CUSTOMER',
             account_status = 'DELETED'
         WHERE id = $2
@@ -427,10 +463,13 @@ async function updateUserRole(userId, newRole) {
             first_name,
             last_name,
             email,
+            phone,
             street,
             postal_code,
             city,
             country,
+            address_line_2,
+            landmark,
             role,
             created_at
         `,
@@ -465,10 +504,13 @@ async function getAllUsers() {
             first_name,
             last_name,
             email,
+            phone,
             street,
             postal_code,
             city,
             country,
+            address_line_2,
+            landmark,
             role,
             account_status,
             created_at

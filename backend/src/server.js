@@ -86,6 +86,57 @@ app.get("/api/db-health", async function (req, res) {
     }
 });
 
+app.get("/api/health/services", async function (req, res) {
+    const services = {
+        database: {
+            status: "unknown"
+        },
+        stripe: {
+            status: "unknown"
+        },
+        auth: {
+            status: "unknown"
+        },
+        account: {
+            status: "unknown"
+        }
+    };
+
+    let allHealthy = true;
+
+    try {
+        await pool.query("SELECT 1");
+
+        services.database.status = "ok";
+        services.account.status = "ok";
+    } catch (error) {
+        console.error("Database health check failed:", error);
+
+        services.database.status = "error";
+        services.account.status = "error";
+        allHealthy = false;
+    }
+
+    if (config.stripe.secretKey) {
+        services.stripe.status = "configured";
+    } else {
+        services.stripe.status = "not_configured";
+        allHealthy = false;
+    }
+
+    if (config.jwtSecret) {
+        services.auth.status = "ok";
+    } else {
+        services.auth.status = "not_configured";
+        allHealthy = false;
+    }
+
+    res.status(allHealthy ? 200 : 503).json({
+        status: allHealthy ? "ok" : "error",
+        services: services
+    });
+});
+
 const frontendPath = path.join(__dirname, "../../frontend");
 
 app.use(express.static(frontendPath));

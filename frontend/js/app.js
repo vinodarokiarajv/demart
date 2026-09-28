@@ -27,6 +27,83 @@ window.addEventListener("pageshow", function () {
 const registerForm = document.getElementById("register-form");
 
 if (registerForm) {
+
+    const passwordInput =
+        document.getElementById("register-password");
+
+    const passwordRequirementLength =
+        document.getElementById("password-requirement-length");
+
+    const passwordRequirementUppercase =
+        document.getElementById("password-requirement-uppercase");
+
+    const passwordRequirementLowercase =
+        document.getElementById("password-requirement-lowercase");
+
+    const passwordRequirementNumber =
+        document.getElementById("password-requirement-number");
+
+    const passwordRequirementSpecial =
+        document.getElementById("password-requirement-special");
+
+    function updatePasswordRequirements() {
+
+        const password = passwordInput.value;
+
+        const requirements = [
+            {
+                element: passwordRequirementLength,
+                valid: password.length >= 8
+            },
+            {
+                element: passwordRequirementUppercase,
+                valid: /[A-Z]/.test(password)
+            },
+            {
+                element: passwordRequirementLowercase,
+                valid: /[a-z]/.test(password)
+            },
+            {
+                element: passwordRequirementNumber,
+                valid: /[0-9]/.test(password)
+            },
+            {
+                element: passwordRequirementSpecial,
+                valid: /[^A-Za-z0-9]/.test(password)
+            }
+        ];
+
+        requirements.forEach(function (requirement) {
+
+            const icon =
+                requirement.element.querySelector(
+                    ".requirement-icon"
+                );
+
+            if (requirement.valid) {
+
+                requirement.element.classList.add("valid");
+
+                icon.textContent = "✓";
+
+            } else {
+
+                requirement.element.classList.remove("valid");
+
+                icon.textContent = "×";
+
+            }
+
+        });
+    }
+
+    passwordInput.addEventListener(
+        "input",
+        updatePasswordRequirements
+    );
+
+    updatePasswordRequirements();
+
     registerForm.addEventListener("submit", async function (event) {
         event.preventDefault();
 
@@ -42,14 +119,20 @@ if (registerForm) {
         const emailInput =
             document.getElementById("register-email");
 
-        const passwordInput =
-            document.getElementById("register-password");
-
         const confirmPasswordInput =
             document.getElementById("register-confirm-password");
 
+        const phoneInput =
+            document.getElementById("register-phone");
+
         const streetInput =
             document.getElementById("register-street");
+
+        const addressLine2Input =
+            document.getElementById("register-address-line-2");
+
+        const landmarkInput =
+            document.getElementById("register-landmark");
 
         const postalCodeInput =
             document.getElementById("register-postal-code");
@@ -65,10 +148,14 @@ if (registerForm) {
         const email = emailInput.value.trim();
         const password = passwordInput.value;
         const confirmPassword = confirmPasswordInput.value;
+        const phone = phoneInput.value.trim();
+        const addressLine2 = addressLine2Input.value.trim();
+        const landmark = landmarkInput.value.trim();
         const street = streetInput.value.trim();
         const postalCode = postalCodeInput.value.trim();
         const city = cityInput.value.trim();
         const country = countryInput.value.trim();
+
 
         if (!firstName) {
             messageElement.textContent = "First name is required";
@@ -85,8 +172,53 @@ if (registerForm) {
             return;
         }
 
+        if (!phone) {
+            messageElement.textContent =
+                "Phone number is required";
+            return;
+        }
+
+        const phonePattern =
+            /^\+?[0-9][0-9\s()-]{6,29}$/;
+
+        if (!phonePattern.test(phone)) {
+            messageElement.textContent =
+                "Please enter a valid phone number";
+            return;
+        }
+
         if (!password) {
             messageElement.textContent = "Password is required";
+            return;
+        }
+
+        if (password.length < 8) {
+            messageElement.textContent =
+                "Password must be at least 8 characters";
+            return;
+        }
+
+        if (!/[A-Z]/.test(password)) {
+            messageElement.textContent =
+                "Password must contain at least one uppercase letter";
+            return;
+        }
+
+        if (!/[a-z]/.test(password)) {
+            messageElement.textContent =
+                "Password must contain at least one lowercase letter";
+            return;
+        }
+
+        if (!/[0-9]/.test(password)) {
+            messageElement.textContent =
+                "Password must contain at least one number";
+            return;
+        }
+
+        if (!/[^A-Za-z0-9]/.test(password)) {
+            messageElement.textContent =
+                "Password must contain at least one special character";
             return;
         }
 
@@ -105,6 +237,18 @@ if (registerForm) {
         if (!street) {
             messageElement.textContent =
                 "Street address is required";
+            return;
+        }
+
+        if (addressLine2.length > 100) {
+            messageElement.textContent =
+                "Address line 2 must not exceed 100 characters";
+            return;
+        }
+
+        if (landmark.length > 100) {
+            messageElement.textContent =
+                "Landmark must not exceed 100 characters";
             return;
         }
 
@@ -139,10 +283,13 @@ if (registerForm) {
                         lastName: lastName,
                         email: email,
                         password: password,
+                        phone: phone,
                         street: street,
                         postalCode: postalCode,
                         city: city,
-                        country: country
+                        country: country,
+                        addressLine2: addressLine2 || null,
+                        landmark: landmark || null
                     })
                 }
             );

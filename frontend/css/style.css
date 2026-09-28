@@ -1648,6 +1648,206 @@ footer p {
     margin-bottom: 16px;
 }
 
+.field-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 8px;
+}
+
+.field-label label {
+    margin-bottom: 0;
+}
+
+.field-info {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #8A6A12;
+    font-size: 15px;
+    line-height: 1;
+}
+
+.field-info:hover,
+.field-info:focus-visible {
+    color: #C9A227;
+}
+
+.field-info:focus-visible {
+    outline: 2px solid #C9A227;
+    outline-offset: 2px;
+    border-radius: 50%;
+}
+
+.field-info-tooltip {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    z-index: 100;
+    width: 260px;
+    padding: 9px 11px;
+    transform: translateX(-50%);
+    background-color: #171717;
+    color: #FAF9F6;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: normal;
+    line-height: 1.45;
+    text-align: left;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+        opacity 0.15s ease,
+        visibility 0.15s ease;
+}
+
+.field-info-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #171717;
+}
+
+.field-info:hover .field-info-tooltip,
+.field-info:focus .field-info-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+.field-error {
+    display: none;
+    margin: 6px 0 0;
+    color: #B42318;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.field-error:not(:empty) {
+    display: block;
+}
+
+.form-group input[aria-invalid="true"] {
+    border-color: #B42318;
+}
+
+.form-group input[aria-invalid="true"]:focus {
+    border-color: #B42318;
+    box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.12);
+}
+
+.terms-agreement .field-error {
+    margin-top: 7px;
+    margin-left: 26px;
+}
+
+#register-terms[aria-invalid="true"] {
+    outline: 2px solid #B42318;
+    outline-offset: 2px;
+}
+
+/* ========================================
+   Password Requirements
+   ======================================== */
+
+.password-requirements {
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: linear-gradient(
+        180deg,
+        #FAF9F6 0%,
+        #F7F4ED 100%
+    );
+    border: 1px solid #E5E1D8;
+    border-radius: 9px;
+    text-align: left;
+}
+
+.password-requirements-title {
+    margin: 0 0 10px;
+    color: #6B6B6B;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+}
+
+.password-requirements ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.password-requirements li {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 28px;
+    padding: 5px 9px;
+    background-color: #FFFFFF;
+    border: 1px solid #E4C7C5;
+    border-radius: 6px;
+    color: #9E4541;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.2;
+    transition:
+        color 0.2s ease,
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.requirement-icon {
+    width: 13px;
+    height: 13px;
+    flex: 0 0 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #A94442;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.password-requirements li.valid {
+    background-color: #F3F8F4;
+    border-color: #B8D5BF;
+    color: #3F7650;
+}
+
+.password-requirements li.valid .requirement-icon {
+    color: #3F7650;
+}
+
+@media (max-width: 520px) {
+    .password-requirements {
+        padding: 11px 12px;
+    }
+
+    .password-requirements ul {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .password-requirements li {
+        width: 100%;
+    }
+}
+
 /* ========================================
    Account Page
    ======================================== */
