@@ -24,8 +24,21 @@ async function getCities(country, region) {
     return locationRepository.getCities(country, region);
 }
 
+async function isValidCityCountry(city, country) {
+    if (!city) {
+        throw new Error("City is required");
+    }
+
+    if (!country) {
+        throw new Error("Country is required");
+    }
+
+    return locationRepository.isValidCityCountry(city, country);
+}
+
 module.exports = {
     getCountries,
     getRegions,
-    getCities
+    getCities,
+    isValidCityCountry
 };

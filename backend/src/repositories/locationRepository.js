@@ -45,8 +45,26 @@ async function getCities(country, region) {
     return result.rows;
 }
 
+async function isValidCityCountry(city, country) {
+    const result = await pool.query(
+        `
+        SELECT 1
+        FROM geo_cities gc
+        INNER JOIN geo_countries gco
+            ON gco.iso_code = gc.country_code
+        WHERE LOWER(TRIM(gc.name)) = LOWER(TRIM($1))
+          AND LOWER(TRIM(gco.country_name)) = LOWER(TRIM($2))
+        LIMIT 1
+        `,
+        [city, country]
+    );
+
+    return result.rowCount > 0;
+}
+
 module.exports = {
     getCountries,
     getRegions,
-    getCities
+    getCities,
+    isValidCityCountry
 };

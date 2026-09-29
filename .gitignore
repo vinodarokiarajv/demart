@@ -3,3 +3,6 @@ node_modules/
 .env
 # Maven
 **/target/
+
+# GeoNames source data
+backend/data/geonames/

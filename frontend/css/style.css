@@ -1797,9 +1797,9 @@ footer p {
     min-height: 28px;
     padding: 5px 9px;
     background-color: #FFFFFF;
-    border: 1px solid #E4C7C5;
+    border: 1px solid #E4E1DA;
     border-radius: 6px;
-    color: #9E4541;
+    color: #6B6B6B;
     font-size: 11px;
     font-weight: 500;
     line-height: 1.2;
@@ -1817,20 +1817,30 @@ footer p {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: #A94442;
+    color: #6B6B6B;
     font-size: 12px;
     font-weight: 700;
     line-height: 1;
 }
 
-.password-requirements li.valid {
+.password-requirements li.requirement-met {
     background-color: #F3F8F4;
     border-color: #B8D5BF;
     color: #3F7650;
 }
 
-.password-requirements li.valid .requirement-icon {
+.password-requirements li.requirement-met .requirement-icon {
     color: #3F7650;
+}
+
+.password-requirements li.requirement-unmet {
+    background-color: #FFF5F4;
+    border-color: #E4C7C5;
+    color: #9E4541;
+}
+
+.password-requirements li.requirement-unmet .requirement-icon {
+    color: #A94442;
 }
 
 @media (max-width: 520px) {

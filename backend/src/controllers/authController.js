@@ -1,4 +1,5 @@
 const authService = require("../services/authService");
+const locationService = require("../services/locationService");
 
 const {
     isValidEmail,
@@ -55,6 +56,15 @@ async function register(req, res) {
     if (addressValidationError) {
         return res.status(400).json({
             message: addressValidationError
+        });
+    }
+
+    const validCityCountry =
+        await locationService.isValidCityCountry(city, country);
+
+    if (!validCityCountry) {
+        return res.status(400).json({
+            message: "City does not belong to the selected country"
         });
     }
 

@@ -27,7 +27,6 @@ window.addEventListener("pageshow", function () {
 const registerForm = document.getElementById("register-form");
 
 if (registerForm) {
-
     const passwordInput =
         document.getElementById("register-password");
 
@@ -46,61 +45,230 @@ if (registerForm) {
     const passwordRequirementSpecial =
         document.getElementById("password-requirement-special");
 
-    function updatePasswordRequirements() {
+    const firstNameInput =
+        document.getElementById("register-first-name");
 
+    const lastNameInput =
+        document.getElementById("register-last-name");
+
+    const emailInput =
+        document.getElementById("register-email");
+
+    const confirmPasswordInput =
+        document.getElementById("register-confirm-password");
+
+    const registerPasswordToggle =
+    document.getElementById("register-password-toggle");
+
+const registerConfirmPasswordToggle =
+    document.getElementById("register-confirm-password-toggle");
+
+function setupPasswordToggle(passwordInput, toggleButton) {
+    if (!passwordInput || !toggleButton) {
+        return;
+    }
+
+    toggleButton.addEventListener("click", function () {
+        const isPasswordVisible =
+            passwordInput.type === "text";
+
+        passwordInput.type = isPasswordVisible
+            ? "password"
+            : "text";
+
+        toggleButton.setAttribute(
+            "aria-label",
+            isPasswordVisible
+                ? "Show password"
+                : "Hide password"
+        );
+
+        toggleButton.setAttribute(
+            "aria-pressed",
+            String(!isPasswordVisible)
+        );
+
+        toggleButton.innerHTML = isPasswordVisible
+            ? `
+                <svg
+                    class="password-toggle-icon"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    focusable="false"
+                >
+                    <path
+                        d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"
+                    ></path>
+                    <circle cx="12" cy="12" r="2.5"></circle>
+                </svg>
+            `
+            : `
+                <svg
+                    class="password-toggle-icon"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    focusable="false"
+                >
+                    <path d="M3 3l18 18"></path>
+                    <path
+                        d="M10.6 6.2A10.8 10.8 0 0 1 12 6c6 0 9.5 6 9.5 6a17.7 17.7 0 0 1-3.2 3.8"
+                    ></path>
+                    <path
+                        d="M6.2 6.2C3.9 7.8 2.5 12 2.5 12s3.5 6 9.5 6c1.4 0 2.7-.3 3.8-.8"
+                    ></path>
+                    <path
+                        d="M9.9 9.9a3 3 0 0 0 4.2 4.2"
+                    ></path>
+                </svg>
+            `;
+    });
+}
+
+setupPasswordToggle(
+    passwordInput,
+    registerPasswordToggle
+);
+
+setupPasswordToggle(
+    confirmPasswordInput,
+    registerConfirmPasswordToggle
+);
+
+    const phoneInput =
+        document.getElementById("register-phone");
+
+    const streetInput =
+        document.getElementById("register-street");
+
+    const addressLine2Input =
+        document.getElementById("register-address-line-2");
+
+    const landmarkInput =
+        document.getElementById("register-landmark");
+
+    const postalCodeInput =
+        document.getElementById("register-postal-code");
+
+    const cityInput =
+        document.getElementById("register-city");
+
+    const countryInput =
+        document.getElementById("register-country");
+
+    const termsInput =
+        document.getElementById("register-terms");
+
+    const firstNameError =
+        document.getElementById("register-first-name-error");
+
+    const lastNameError =
+        document.getElementById("register-last-name-error");
+
+    const emailError =
+        document.getElementById("register-email-error");
+
+    const passwordError =
+        document.getElementById("register-password-error");
+
+    const confirmPasswordError =
+        document.getElementById("register-confirm-password-error");
+
+    const phoneError =
+        document.getElementById("register-phone-error");
+
+    const streetError =
+        document.getElementById("register-street-error");
+
+    const addressLine2Error =
+        document.getElementById("register-address-line-2-error");
+
+    const landmarkError =
+        document.getElementById("register-landmark-error");
+
+    const postalCodeError =
+        document.getElementById("register-postal-code-error");
+
+    const cityError =
+        document.getElementById("register-city-error");
+
+    const countryError =
+        document.getElementById("register-country-error");
+
+    const termsError =
+        document.getElementById("register-terms-error");
+
+    function updatePasswordRequirements(showErrors = false) {
         const password = passwordInput.value;
 
         const requirements = [
             {
                 element: passwordRequirementLength,
-                valid: password.length >= 8
+                met: password.length >= 8
             },
             {
                 element: passwordRequirementUppercase,
-                valid: /[A-Z]/.test(password)
+                met: /[A-Z]/.test(password)
             },
             {
                 element: passwordRequirementLowercase,
-                valid: /[a-z]/.test(password)
+                met: /[a-z]/.test(password)
             },
             {
                 element: passwordRequirementNumber,
-                valid: /[0-9]/.test(password)
+                met: /[0-9]/.test(password)
             },
             {
                 element: passwordRequirementSpecial,
-                valid: /[^A-Za-z0-9]/.test(password)
+                met: /[^A-Za-z0-9]/.test(password)
             }
         ];
 
-        requirements.forEach(function (requirement) {
+        requirements.forEach(({ element, met }) => {
+            const icon = element.querySelector(".requirement-icon");
 
-            const icon =
-                requirement.element.querySelector(
-                    ".requirement-icon"
-                );
+            element.classList.remove("requirement-met", "requirement-unmet");
 
-            if (requirement.valid) {
-
-                requirement.element.classList.add("valid");
-
+            if (met) {
+                element.classList.add("requirement-met");
                 icon.textContent = "✓";
-
-            } else {
-
-                requirement.element.classList.remove("valid");
-
+            } else if (showErrors) {
+                element.classList.add("requirement-unmet");
                 icon.textContent = "×";
-
+            } else {
+                icon.textContent = "";
             }
-
         });
     }
 
-    passwordInput.addEventListener(
-        "input",
-        updatePasswordRequirements
-    );
+    function clearFieldError(input, errorElement) {
+        errorElement.textContent = "";
+        input.removeAttribute("aria-invalid");
+    }
+
+    function setFieldError(input, errorElement, message) {
+        errorElement.textContent = message;
+        input.setAttribute("aria-invalid", "true");
+    }
+
+    function clearAllFieldErrors() {
+        clearFieldError(firstNameInput, firstNameError);
+        clearFieldError(lastNameInput, lastNameError);
+        clearFieldError(emailInput, emailError);
+        clearFieldError(passwordInput, passwordError);
+        clearFieldError(confirmPasswordInput, confirmPasswordError);
+        clearFieldError(phoneInput, phoneError);
+        clearFieldError(streetInput, streetError);
+        clearFieldError(addressLine2Input, addressLine2Error);
+        clearFieldError(landmarkInput, landmarkError);
+        clearFieldError(postalCodeInput, postalCodeError);
+        clearFieldError(cityInput, cityError);
+        clearFieldError(countryInput, countryError);
+        clearFieldError(termsInput, termsError);
+    }
+
+    passwordInput.addEventListener("input", () => {
+        updatePasswordRequirements(false);
+    });
 
     updatePasswordRequirements();
 
@@ -110,38 +278,9 @@ if (registerForm) {
         const messageElement =
             document.getElementById("register-message");
 
-        const firstNameInput =
-            document.getElementById("register-first-name");
-
-        const lastNameInput =
-            document.getElementById("register-last-name");
-
-        const emailInput =
-            document.getElementById("register-email");
-
-        const confirmPasswordInput =
-            document.getElementById("register-confirm-password");
-
-        const phoneInput =
-            document.getElementById("register-phone");
-
-        const streetInput =
-            document.getElementById("register-street");
-
-        const addressLine2Input =
-            document.getElementById("register-address-line-2");
-
-        const landmarkInput =
-            document.getElementById("register-landmark");
-
-        const postalCodeInput =
-            document.getElementById("register-postal-code");
-
-        const cityInput =
-            document.getElementById("register-city");
-
-        const countryInput =
-            document.getElementById("register-country");
+        clearAllFieldErrors();
+        messageElement.textContent = "";
+        updatePasswordRequirements(false);
 
         const firstName = firstNameInput.value.trim();
         const lastName = lastNameInput.value.trim();
@@ -156,117 +295,176 @@ if (registerForm) {
         const city = cityInput.value.trim();
         const country = countryInput.value.trim();
 
+        let hasValidationErrors = false;
+        let firstInvalidInput = null;
 
+        function addValidationError(input, errorElement, message) {
+            setFieldError(input, errorElement, message);
+            hasValidationErrors = true;
+
+            if (!firstInvalidInput) {
+                firstInvalidInput = input;
+            }
+        }
+
+        // First name
         if (!firstName) {
-            messageElement.textContent = "First name is required";
-            return;
+            addValidationError(
+                firstNameInput,
+                firstNameError,
+                "First name is required"
+            );
         }
 
+        // Last name
         if (!lastName) {
-            messageElement.textContent = "Last name is required";
-            return;
+            addValidationError(
+                lastNameInput,
+                lastNameError,
+                "Last name is required"
+            );
         }
 
+        // Email
         if (!email) {
-            messageElement.textContent = "Email is required";
-            return;
+            addValidationError(
+                emailInput,
+                emailError,
+                "Email is required"
+            );
         }
 
-        if (!phone) {
-            messageElement.textContent =
-                "Phone number is required";
-            return;
-        }
+        // Password
+        const passwordLengthValid = password.length >= 8;
+        const passwordUppercaseValid = /[A-Z]/.test(password);
+        const passwordLowercaseValid = /[a-z]/.test(password);
+        const passwordNumberValid = /[0-9]/.test(password);
+        const passwordSpecialValid = /[^A-Za-z0-9]/.test(password);
 
-        const phonePattern =
-            /^\+?[0-9][0-9\s()-]{6,29}$/;
-
-        if (!phonePattern.test(phone)) {
-            messageElement.textContent =
-                "Please enter a valid phone number";
-            return;
-        }
+        const passwordValid =
+            passwordLengthValid &&
+            passwordUppercaseValid &&
+            passwordLowercaseValid &&
+            passwordNumberValid &&
+            passwordSpecialValid;
 
         if (!password) {
-            messageElement.textContent = "Password is required";
-            return;
+            addValidationError(
+                passwordInput,
+                passwordError,
+                "Password is required"
+            );
+        } else if (!passwordValid) {
+            addValidationError(
+                passwordInput,
+                passwordError,
+                "Password does not meet all requirements"
+            );
         }
 
-        if (password.length < 8) {
-            messageElement.textContent =
-                "Password must be at least 8 characters";
-            return;
-        }
-
-        if (!/[A-Z]/.test(password)) {
-            messageElement.textContent =
-                "Password must contain at least one uppercase letter";
-            return;
-        }
-
-        if (!/[a-z]/.test(password)) {
-            messageElement.textContent =
-                "Password must contain at least one lowercase letter";
-            return;
-        }
-
-        if (!/[0-9]/.test(password)) {
-            messageElement.textContent =
-                "Password must contain at least one number";
-            return;
-        }
-
-        if (!/[^A-Za-z0-9]/.test(password)) {
-            messageElement.textContent =
-                "Password must contain at least one special character";
-            return;
-        }
-
+        // Confirm password
         if (!confirmPassword) {
-            messageElement.textContent =
-                "Please confirm your password";
-            return;
+            addValidationError(
+                confirmPasswordInput,
+                confirmPasswordError,
+                "Please confirm your password"
+            );
+        } else if (password !== confirmPassword) {
+            addValidationError(
+                confirmPasswordInput,
+                confirmPasswordError,
+                "Passwords do not match"
+            );
         }
 
-        if (password !== confirmPassword) {
-            messageElement.textContent =
-                "Passwords do not match";
-            return;
+        // Phone
+        if (!phone) {
+            addValidationError(
+                phoneInput,
+                phoneError,
+                "Phone number is required"
+            );
+        } else {
+            const phonePattern =
+                /^\+?[0-9][0-9\s()-]{6,29}$/;
+
+            if (!phonePattern.test(phone)) {
+                addValidationError(
+                    phoneInput,
+                    phoneError,
+                    "Please enter a valid phone number"
+                );
+            }
         }
 
+        // Street
         if (!street) {
-            messageElement.textContent =
-                "Street address is required";
-            return;
+            addValidationError(
+                streetInput,
+                streetError,
+                "Street address is required"
+            );
         }
 
+        // Optional address line 2
         if (addressLine2.length > 100) {
-            messageElement.textContent =
-                "Address line 2 must not exceed 100 characters";
-            return;
+            addValidationError(
+                addressLine2Input,
+                addressLine2Error,
+                "Address line 2 must not exceed 100 characters"
+            );
         }
 
+        // Optional landmark
         if (landmark.length > 100) {
-            messageElement.textContent =
-                "Landmark must not exceed 100 characters";
-            return;
+            addValidationError(
+                landmarkInput,
+                landmarkError,
+                "Landmark must not exceed 100 characters"
+            );
         }
 
+        // Postal code
         if (!postalCode) {
-            messageElement.textContent =
-                "Postal code is required";
-            return;
+            addValidationError(
+                postalCodeInput,
+                postalCodeError,
+                "Postal code is required"
+            );
         }
 
+        // City
         if (!city) {
-            messageElement.textContent =
-                "City is required";
-            return;
+            addValidationError(
+                cityInput,
+                cityError,
+                "City is required"
+            );
         }
 
+        // Country
         if (!country) {
-            messageElement.textContent =
-                "Country is required";
+            addValidationError(
+                countryInput,
+                countryError,
+                "Country is required"
+            );
+        }
+
+        // Terms
+        if (!termsInput.checked) {
+            addValidationError(
+                termsInput,
+                termsError,
+                "You must agree to the Terms & Conditions"
+            );
+        }
+
+        // Show password requirement errors after submission
+        updatePasswordRequirements(true);
+
+        if (hasValidationErrors) {
+            firstInvalidInput.focus();
             return;
         }
 
@@ -302,9 +500,21 @@ if (registerForm) {
 
                 registerForm.reset();
 
+                updatePasswordRequirements();
+
                 setTimeout(function () {
                     window.location.href = "login.html";
                 }, 1200);
+            } else if (
+                result.message ===
+                "City does not belong to the selected country"
+            ) {
+                setFieldError(
+                    cityInput,
+                    cityError,
+                    result.message
+                );
+                cityInput.focus();
             } else {
                 messageElement.textContent =
                     result.message;
