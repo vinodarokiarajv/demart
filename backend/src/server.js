@@ -20,7 +20,7 @@ app.use(helmet());
 
 const allowedOrigins = (
     process.env.CORS_ORIGINS ||
-    "http://127.0.0.1:5500,http://localhost:5500"
+    "http://localhost:3000"
 )
     .split(",")
     .map(origin => origin.trim())

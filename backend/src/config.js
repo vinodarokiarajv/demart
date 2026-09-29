@@ -39,7 +39,7 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
 
 const frontendUrl =
     process.env.FRONTEND_URL ||
-    "http://127.0.0.1:5500";
+    "http://localhost:3000";
 
 module.exports = {
     port,
