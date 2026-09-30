@@ -155,6 +155,9 @@ setupPasswordToggle(
     const countryInput =
         document.getElementById("register-country");
 
+    const regionInput =
+        document.getElementById("register-region");
+
     const termsInput =
         document.getElementById("register-terms");
 
@@ -193,6 +196,41 @@ setupPasswordToggle(
 
     const countryError =
         document.getElementById("register-country-error");
+
+    const regionError =
+        document.getElementById("register-region-error");
+
+    async function loadRegisterCountries() {
+        try {
+            const response = await fetch(
+                "http://localhost:3000/api/locations/countries"
+            );
+
+            if (!response.ok) {
+                throw new Error("Failed to load countries");
+            }
+
+            const countries = (await response.json()).countries;
+
+            countryInput.innerHTML =
+                '<option value="">Select your country</option>';
+
+            countries.forEach(function (country) {
+                const option =
+                    document.createElement("option");
+
+                option.value = country.country;
+                option.textContent = country.country;
+
+                countryInput.appendChild(option);
+            });
+        } catch (error) {
+            console.error(
+                "Failed to load registration countries:",
+                error
+            );
+        }
+    }
 
     const termsError =
         document.getElementById("register-terms-error");
@@ -263,6 +301,7 @@ setupPasswordToggle(
         clearFieldError(postalCodeInput, postalCodeError);
         clearFieldError(cityInput, cityError);
         clearFieldError(countryInput, countryError);
+        clearFieldError(regionInput, regionError);
         clearFieldError(termsInput, termsError);
     }
 
@@ -271,6 +310,98 @@ setupPasswordToggle(
     });
 
     updatePasswordRequirements();
+
+    loadRegisterCountries();
+
+    countryInput.addEventListener("change", async function () {
+        const country = countryInput.value;
+
+        regionInput.innerHTML =
+            '<option value="">Select your region / state</option>';
+
+        regionInput.disabled = true;
+
+        cityInput.innerHTML =
+            '<option value="">Select your city</option>';
+
+        cityInput.disabled = true;
+
+        if (!country) {
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                `http://localhost:3000/api/locations/regions?country=${encodeURIComponent(country)}`
+            );
+
+            if (!response.ok) {
+                throw new Error("Failed to load regions");
+            }
+
+            const data = await response.json();
+
+            data.regions.forEach(function (region) {
+                const option =
+                    document.createElement("option");
+
+                option.value = region.region;
+                option.textContent = region.region;
+
+                regionInput.appendChild(option);
+            });
+
+            regionInput.disabled = false;
+        } catch (error) {
+            console.error(
+                "Failed to load registration regions:",
+                error
+            );
+        }
+    });
+
+    regionInput.addEventListener("change", async function () {
+        const country = countryInput.value;
+        const region = regionInput.value;
+
+        cityInput.innerHTML =
+            '<option value="">Select your city</option>';
+
+        cityInput.disabled = true;
+
+        if (!country || !region) {
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                `http://localhost:3000/api/locations/cities?country=${encodeURIComponent(country)}&region=${encodeURIComponent(region)}`
+            );
+
+            if (!response.ok) {
+                throw new Error("Failed to load cities");
+            }
+
+            const data = await response.json();
+
+            data.cities.forEach(function (city) {
+                const option =
+                    document.createElement("option");
+
+                option.value = city.city;
+                option.textContent = city.city;
+
+                cityInput.appendChild(option);
+            });
+
+            cityInput.disabled = false;
+        } catch (error) {
+            console.error(
+                "Failed to load registration cities:",
+                error
+            );
+        }
+    });
 
     registerForm.addEventListener("submit", async function (event) {
         event.preventDefault();

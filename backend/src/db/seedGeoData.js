@@ -6,6 +6,7 @@ const pool = require("./db");
 const DATA_DIR = path.join(__dirname, "../../data/geonames");
 const COUNTRY_FILE = path.join(DATA_DIR, "countryInfo.txt");
 const CITY_FILE = path.join(DATA_DIR, "cities500.txt");
+const ADMIN1_FILE = path.join(DATA_DIR, "admin1CodesASCII.txt");
 
 const BATCH_SIZE = 500;
 
@@ -170,6 +171,70 @@ async function insertCountries(client, countries) {
     );
 }
 
+async function readAdmin1Data() {
+    const regions = [];
+
+    const rl = readline.createInterface({
+        input: fs.createReadStream(ADMIN1_FILE),
+        crlfDelay: Infinity
+    });
+
+    for await (const line of rl) {
+        if (!line || line.startsWith("#")) continue;
+
+        const fields = line.split("\t");
+        if (fields.length < 4) continue;
+
+        const [code, name, asciiName, geonameId] = fields;
+        const separatorIndex = code.indexOf(".");
+
+        if (separatorIndex <= 0) continue;
+
+        const countryCode = code.substring(0, separatorIndex);
+        const admin1Code = code.substring(separatorIndex + 1);
+
+        if (!countryCode || !admin1Code || !name) continue;
+
+        regions.push({
+            countryCode,
+            admin1Code,
+            name,
+            asciiName: asciiName || null,
+            geonameId: geonameId ? Number(geonameId) : null
+        });
+    }
+
+    return regions;
+}
+
+async function insertAdmin1Regions(client, regions) {
+    for (const region of regions) {
+        await client.query(
+            `
+            INSERT INTO geo_admin1_regions (
+                country_code,
+                admin1_code,
+                name,
+                ascii_name,
+                geoname_id
+            )
+            VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (country_code, admin1_code) DO UPDATE SET
+                name = EXCLUDED.name,
+                ascii_name = EXCLUDED.ascii_name,
+                geoname_id = EXCLUDED.geoname_id
+            `,
+            [
+                region.countryCode,
+                region.admin1Code,
+                region.name,
+                region.asciiName,
+                region.geonameId
+            ]
+        );
+    }
+}
+
 async function insertCityBatch(client, cities) {
     const values = [];
     const placeholders = [];
@@ -331,6 +396,13 @@ async function main() {
 
         console.log("Importing countries...");
         await insertCountries(client, countries);
+
+        console.log("Reading GeoNames admin1 region data...");
+        const regions = await readAdmin1Data();
+        console.log(`Admin1 regions found: ${regions.length}`);
+
+        console.log("Importing admin1 regions...");
+        await insertAdmin1Regions(client, regions);
 
         console.log("Importing cities...");
         const cityCount = await importCities(client);

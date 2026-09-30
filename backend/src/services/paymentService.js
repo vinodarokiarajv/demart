@@ -3,6 +3,7 @@ const config = require("../config");
 const pool = require("../db/db");
 const paymentRepository = require("../repositories/paymentRepository");
 const orderRepository = require("../repositories/orderRepository");
+const deliveryRepository = require("../repositories/deliveryRepository");
 const inventoryReservationRepository = require(
     "../repositories/inventoryReservationRepository"
 );
@@ -288,6 +289,16 @@ async function completeStripePayment({
 
         if (!updatedOrder) {
             throw new Error("Failed to update order payment status");
+        }
+
+        const delivery =
+            await deliveryRepository.createDelivery(
+                payment.order_id,
+                client
+            );
+
+        if (!delivery) {
+            throw new Error("Failed to create delivery");
         }
 
         const consumedReservations = [];

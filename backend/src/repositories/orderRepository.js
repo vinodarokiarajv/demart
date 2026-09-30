@@ -6,6 +6,8 @@ async function createOrder(
     totalAmount,
     shippingAmount,
     shippingAddress,
+    shippingLatitude,
+    shippingLongitude,
     deliveryMethod,
     paymentMethod,
     paymentStatus
@@ -21,13 +23,15 @@ async function createOrder(
             shipping_postal_code,
             shipping_city,
             shipping_country,
+            shipping_latitude,
+            shipping_longitude,
             delivery_method,
             payment_method,
             payment_status
         )
         VALUES (
             $1, $2, $3, $4, $5, $6, $7, $8,
-            $9, $10, $11
+            $9, $10, $11, $12, $13
         )
         RETURNING
             id,
@@ -40,6 +44,8 @@ async function createOrder(
             shipping_postal_code,
             shipping_city,
             shipping_country,
+            shipping_latitude,
+            shipping_longitude,
             delivery_method,
             payment_method,
             payment_status,
@@ -54,6 +60,8 @@ async function createOrder(
             shippingAddress.postalCode,
             shippingAddress.city,
             shippingAddress.country,
+            shippingLatitude,
+            shippingLongitude,
             deliveryMethod,
             paymentMethod,
             paymentStatus
@@ -98,6 +106,8 @@ async function findOrdersByUserId(userId) {
             shipping_postal_code,
             shipping_city,
             shipping_country,
+            shipping_latitude,
+            shipping_longitude,
             delivery_method,
             payment_method,
             payment_status,
@@ -126,6 +136,8 @@ async function findOrderByIdAndUserId(orderId, userId) {
             shipping_postal_code,
             shipping_city,
             shipping_country,
+            shipping_latitude,
+            shipping_longitude,
             delivery_method,
             payment_method,
             payment_status,

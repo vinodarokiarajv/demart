@@ -8,6 +8,8 @@ const inventoryReservationRepository = require(
     "../repositories/inventoryReservationRepository"
 );
 
+const geocodingService = require("./geocodingService");
+
 const FREE_SHIPPING_THRESHOLD = 100;
 const STANDARD_SHIPPING_FEE = 4.99;
 const EXPRESS_SHIPPING_FEE = 9.99;
@@ -57,6 +59,35 @@ async function createOrder(
         !country
     ) {
         throw new AppError("Complete shipping address is required", 400);
+    }
+
+    let shippingLatitude = null;
+    let shippingLongitude = null;
+
+    try {
+        const geocodeResult =
+            await geocodingService.geocodeAddress({
+                street,
+                postalCode,
+                city,
+                country
+            });
+
+        if (
+            geocodeResult &&
+            (
+                geocodeResult.match.level === "building" ||
+                geocodeResult.match.level === "street"
+            )
+        ) {
+            shippingLatitude = geocodeResult.latitude;
+            shippingLongitude = geocodeResult.longitude;
+        }
+    } catch (error) {
+        console.error(
+            "Order shipping address geocoding failed:",
+            error.message
+        );
     }
 
     if (!ALLOWED_DELIVERY_METHODS.includes(deliveryMethod)) {
@@ -177,6 +208,8 @@ async function createOrder(
                     city: String(city).trim(),
                     country: String(country).trim()
                 },
+                shippingLatitude,
+                shippingLongitude,
                 deliveryMethod,
                 paymentMethod,
                 paymentStatus

@@ -1,5 +1,6 @@
 const authService = require("../services/authService");
 const locationService = require("../services/locationService");
+const geocodingService = require("../services/geocodingService");
 
 const {
     isValidEmail,
@@ -68,6 +69,40 @@ async function register(req, res) {
         });
     }
 
+    let latitude = null;
+    let longitude = null;
+    let geocodedAt = null;
+    let geocodeMatchLevel = null;
+
+    try {
+        const geocodeResult =
+            await geocodingService.geocodeAddress({
+                street,
+                postalCode,
+                city,
+                country
+            });
+
+        if (geocodeResult) {
+            geocodeMatchLevel = geocodeResult.match.level;
+
+            if (
+                geocodeResult.match.level === "building" ||
+                geocodeResult.match.level === "street"
+            ) {
+                latitude = geocodeResult.latitude;
+                longitude = geocodeResult.longitude;
+            }
+
+            geocodedAt = new Date();
+        }
+    } catch (error) {
+        console.error(
+            "Registration geocoding failed:",
+            error.message
+        );
+    }
+
     if (password.length < 8) {
         return res.status(400).json({
             message: "Password must be at least 8 characters"
@@ -110,7 +145,11 @@ async function register(req, res) {
             city,
             country,
             addressLine2,
-            landmark
+            landmark,
+            latitude,
+            longitude,
+            geocodedAt,
+            geocodeMatchLevel
         );
 
         res.status(201).json({
@@ -393,6 +432,49 @@ async function updateMe(req, res) {
         });
     }
 
+    const isValidLocation =
+        await locationService.isValidCityCountry(city, country);
+
+    if (!isValidLocation) {
+        return res.status(400).json({
+            message: "City does not belong to the selected country"
+        });
+    }
+
+        let latitude = null;
+    let longitude = null;
+    let geocodedAt = null;
+    let geocodeMatchLevel = null;
+
+    try {
+        const geocodeResult =
+            await geocodingService.geocodeAddress({
+                street,
+                postalCode,
+                city,
+                country
+            });
+
+        if (geocodeResult) {
+            geocodeMatchLevel = geocodeResult.match.level;
+
+            if (
+                geocodeResult.match.level === "building" ||
+                geocodeResult.match.level === "street"
+            ) {
+                latitude = geocodeResult.latitude;
+                longitude = geocodeResult.longitude;
+            }
+
+            geocodedAt = new Date();
+        }
+    } catch (error) {
+        console.error(
+            "Account update geocoding failed:",
+            error.message
+        );
+    }
+
     try {
         const user = await authService.updateUser(
             req.user.id,
@@ -405,7 +487,11 @@ async function updateMe(req, res) {
             city,
             country,
             addressLine2,
-            landmark
+            landmark,
+            latitude,
+            longitude,
+            geocodedAt,
+            geocodeMatchLevel
         );
 
         if (!user) {

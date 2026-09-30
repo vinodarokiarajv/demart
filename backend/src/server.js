@@ -10,6 +10,10 @@ const adminOrderRoutes = require("./routes/adminOrderRoutes");
 const adminUserRoutes = require("./routes/adminUserRoutes");
 const locationRoutes = require("./routes/locationRoutes");
 const storeRoutes = require("./routes/storeRoutes");
+const deliveryTrackingRoutes =
+    require("./routes/deliveryTrackingRoutes");
+const deliveryTrackingUpdateRoutes =
+    require("./routes/deliveryTrackingUpdateRoutes");
 const pool = require("./db/db");
 const config = require("./config");
 
@@ -59,6 +63,11 @@ app.use("/api/admin/orders", adminOrderRoutes);
 app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/locations", locationRoutes);
 app.use("/api/stores", storeRoutes);
+app.use("/api/delivery-tracking", deliveryTrackingRoutes);
+app.use(
+    "/api/delivery-tracking-updates",
+    deliveryTrackingUpdateRoutes
+);
 
 app.get("/api/health", function (req, res) {
     res.json({

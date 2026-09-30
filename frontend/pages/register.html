@@ -616,15 +616,16 @@
             </span>
         </button>
     </div>
-        <input
+        <select
             id="register-city"
             name="city"
             data-testid="register-city"
-            type="text"
-            placeholder="Enter your city"
             autocomplete="address-level2"
+            disabled
             required
         >
+            <option value="">Select your city</option>
+        </select>
 
     <p
         id="register-city-error"
@@ -635,45 +636,96 @@
     </div>
 
     <div class="form-group">
+
         <div class="field-label">
-        <label for="register-country">
-            Country
-        </label>
 
-        <button
-            type="button"
-            class="field-info"
-            data-testid="register-country-info"
-            aria-label="Information about Country"
-            aria-describedby="register-country-info-text"
-        >
-            <span aria-hidden="true">ⓘ</span>
+            <label for="register-country">
+                Country
+            </label>
 
-            <span
-                id="register-country-info-text"
-                class="field-info-tooltip"
-                role="tooltip"
+            <button
+                type="button"
+                class="field-info"
+                data-testid="register-country-info"
+                aria-label="Information about Country"
+                aria-describedby="register-country-info-text"
             >
-                Enter the country associated with the address.
-            </span>
-        </button>
-    </div>
-        <input
+                <span aria-hidden="true">ⓘ</span>
+
+                <span
+                    id="register-country-info-text"
+                    class="field-info-tooltip"
+                    role="tooltip"
+                >
+                    Select the country associated with the address.
+                </span>
+            </button>
+
+        </div>
+
+        <select
             id="register-country"
             name="country"
             data-testid="register-country"
             autocomplete="country-name"
-            type="text"
-            placeholder="Enter your country"
             required
         >
+            <option value="">Select your country</option>
+        </select>
 
-    <p
-        id="register-country-error"
-        class="field-error"
-        data-testid="register-country-error"
-        role="alert"
-    ></p>
+        <p
+            id="register-country-error"
+            class="field-error"
+            data-testid="register-country-error"
+            role="alert"
+        ></p>
+
+    </div>
+
+    <div class="form-group">
+
+        <div class="field-label">
+
+            <label for="register-region">
+                Region / State
+            </label>
+
+            <button
+                type="button"
+                class="field-info"
+                data-testid="register-region-info"
+                aria-label="Information about Region or State"
+                aria-describedby="register-region-info-text"
+            >
+                <span aria-hidden="true">ⓘ</span>
+
+                <span
+                    id="register-region-info-text"
+                    class="field-info-tooltip"
+                    role="tooltip"
+                >
+                    Select the region or state where the address is located.
+                </span>
+            </button>
+
+        </div>
+
+        <select
+            id="register-region"
+            name="region"
+            data-testid="register-region"
+            disabled
+        >
+            <option value="">Select your region / state</option>
+        </select>
+
+        <p
+            id="register-region-error"
+            class="field-error"
+            data-testid="register-region-error"
+            role="alert"
+        ></p>
+
     </div>
 
     <div class="terms-agreement">

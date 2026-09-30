@@ -12,7 +12,8 @@ const requiredVariables = [
     "DB_USER",
     "DB_PASSWORD",
     "JWT_SECRET",
-    "STRIPE_SECRET_KEY"
+    "STRIPE_SECRET_KEY",
+    "GEOAPIFY_API_KEY"
 ];
 
 for (const variable of requiredVariables) {
@@ -55,5 +56,8 @@ module.exports = {
     stripe: {
         secretKey: process.env.STRIPE_SECRET_KEY,
         webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || ""
+    },
+    geoapify: {
+        apiKey: process.env.GEOAPIFY_API_KEY
     }
 };

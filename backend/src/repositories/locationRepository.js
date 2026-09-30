@@ -2,10 +2,10 @@ const pool = require("../db/db");
 
 async function getCountries() {
     const result = await pool.query(`
-        SELECT DISTINCT country
-        FROM locations
-        WHERE is_active = true
-        ORDER BY country
+        SELECT
+            country_name AS country
+        FROM geo_countries
+        ORDER BY country_name
     `);
 
     return result.rows;
@@ -14,11 +14,13 @@ async function getCountries() {
 async function getRegions(country) {
     const result = await pool.query(
         `
-        SELECT DISTINCT region
-        FROM locations
-        WHERE country = $1
-          AND is_active = true
-        ORDER BY region
+        SELECT
+            r.name AS region
+        FROM geo_admin1_regions r
+        INNER JOIN geo_countries c
+            ON c.iso_code = r.country_code
+        WHERE LOWER(TRIM(c.country_name)) = LOWER(TRIM($1))
+        ORDER BY r.name
         `,
         [country]
     );
@@ -30,14 +32,18 @@ async function getCities(country, region) {
     const result = await pool.query(
         `
         SELECT
-            id,
-            city,
-            timezone
-        FROM locations
-        WHERE country = $1
-          AND region = $2
-          AND is_active = true
-        ORDER BY city
+            gc.geoname_id AS id,
+            gc.name AS city,
+            gc.timezone
+        FROM geo_cities gc
+        INNER JOIN geo_countries c
+            ON c.iso_code = gc.country_code
+        INNER JOIN geo_admin1_regions r
+            ON r.country_code = gc.country_code
+           AND r.admin1_code = gc.admin1_code
+        WHERE LOWER(TRIM(c.country_name)) = LOWER(TRIM($1))
+          AND LOWER(TRIM(r.name)) = LOWER(TRIM($2))
+        ORDER BY gc.name
         `,
         [country, region]
     );

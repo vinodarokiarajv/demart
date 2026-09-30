@@ -16,7 +16,11 @@ async function registerUser(
     city,
     country,
     addressLine2,
-    landmark
+    landmark,
+    latitude,
+    longitude,
+    geocodedAt,
+    geocodeMatchLevel
 ) {
     const passwordHash = await bcrypt.hash(password, 10);
 
@@ -34,9 +38,16 @@ const result = await pool.query(
             city,
             country,
             address_line_2,
-            landmark
+            landmark,
+            latitude,
+            longitude,
+            geocoded_at,
+            geocode_match_level
         )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+     VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8,
+        $9, $10, $11, $12, $13, $14, $15, $16
+     )
      RETURNING
         id,
         first_name,
@@ -49,6 +60,10 @@ const result = await pool.query(
         country,
         address_line_2,
         landmark,
+        latitude,
+        longitude,
+        geocoded_at,
+        geocode_match_level,
         created_at`,
     [
         `${firstName} ${lastName}`,
@@ -62,7 +77,11 @@ const result = await pool.query(
         city,
         country,
         addressLine2,
-        landmark
+        landmark,
+        latitude,
+        longitude,
+        geocodedAt,
+        geocodeMatchLevel
     ]
 );
 
@@ -308,6 +327,10 @@ async function getUserById(userId) {
             country,
             address_line_2,
             landmark,
+            latitude,
+            longitude,
+            geocoded_at,
+            geocode_match_level,
             role,
             account_status,
             created_at
@@ -335,7 +358,11 @@ async function updateUser(
     city,
     country,
     addressLine2,
-    landmark
+    landmark,
+    latitude,
+    longitude,
+    geocodedAt,
+    geocodeMatchLevel
 ) {
     const result = await pool.query(
     `
@@ -351,7 +378,11 @@ async function updateUser(
         city = $9,
         country = $10,
         address_line_2 = $11,
-        landmark = $12
+        landmark = $12,
+        latitude = $13,
+        longitude = $14,
+        geocoded_at = $15,
+        geocode_match_level = $16
     WHERE id = $1
     RETURNING
         id,
@@ -366,6 +397,10 @@ async function updateUser(
         country,
         address_line_2,
         landmark,
+        latitude,
+        longitude,
+        geocoded_at,
+        geocode_match_level,
         role,
         created_at
     `,
@@ -381,7 +416,11 @@ async function updateUser(
         city,
         country,
         addressLine2,
-        landmark
+        landmark,
+        latitude,
+        longitude,
+        geocodedAt,
+        geocodeMatchLevel
     ]
 );
 
@@ -470,6 +509,10 @@ async function updateUserRole(userId, newRole) {
             country,
             address_line_2,
             landmark,
+            latitude,
+            longitude,
+            geocodedAt,
+            geocodeMatchLevel,
             role,
             created_at
         `,
