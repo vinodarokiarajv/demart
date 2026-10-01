@@ -164,6 +164,35 @@ header {
     background: #F3C370;
 }
 
+@media (max-width: 700px) {
+
+    .site-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 16px 20px;
+    }
+
+    .brand {
+        align-self: center;
+    }
+
+    .main-nav {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 4px;
+        margin-left: 0;
+    }
+
+    .main-nav a {
+        min-height: 34px;
+        padding: 0 9px;
+        font-size: 13px;
+    }
+
+}
+
 /* ========================================
    Navigation Visibility
    ======================================== */
@@ -2117,6 +2146,90 @@ footer p {
 .order-card-details span {
     color: #171717;
     font-weight: bold;
+}
+
+.delivery-timeline {
+    display: flex;
+    align-items: flex-start;
+    width: 100%;
+    margin-top: 28px;
+}
+
+.delivery-step {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 80px;
+}
+
+.delivery-step-indicator {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #E5E1D8;
+    border-radius: 50%;
+    background-color: #FFFFFF;
+    color: #777777;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.delivery-step.current .delivery-step-indicator {
+    border-color: #C9A227;
+    background-color: #C9A227;
+    color: #171717;
+}
+
+.delivery-step.completed .delivery-step-indicator {
+    border-color: #C9A227;
+    background-color: #C9A227;
+    color: #171717;
+}
+
+.delivery-step-label {
+    color: #777777;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.delivery-step.current .delivery-step-label,
+.delivery-step.completed .delivery-step-label {
+    color: #171717;
+}
+
+.delivery-step-connector {
+    flex: 1;
+    height: 2px;
+    margin-top: 15px;
+    background-color: #E5E1D8;
+}
+
+.delivery-step-connector.completed {
+    background-color: #C9A227;
+}
+
+@media (max-width: 600px) {
+
+    .delivery-step {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .delivery-step-indicator {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+
+    .delivery-step-label {
+        font-size: 11px;
+    }
+
 }
 
 .order-card-actions {

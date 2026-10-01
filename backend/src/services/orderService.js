@@ -2,6 +2,8 @@ const pool = require("../db/db");
 const AppError = require("../utils/appError");
 
 const orderRepository = require("../repositories/orderRepository");
+const deliveryRepository =
+    require("../repositories/deliveryRepository");
 const productRepository = require("../repositories/productRepository");
 
 const inventoryReservationRepository = require(
@@ -277,7 +279,24 @@ async function getOrdersByUserId(userId) {
         throw new AppError("User ID is required", 400);
     }
 
-    return await orderRepository.findOrdersByUserId(userId);
+    const orders =
+        await orderRepository.findOrdersByUserId(userId);
+
+    const ordersWithDelivery = await Promise.all(
+        orders.map(async function (order) {
+            const delivery =
+                await deliveryRepository.findDeliveryByOrderId(
+                    order.id
+                );
+
+            return {
+                ...order,
+                delivery: delivery || null
+            };
+        })
+    );
+
+    return ordersWithDelivery;
 }
 
 async function getOrderById(orderId, userId) {
@@ -304,8 +323,16 @@ async function getOrderById(orderId, userId) {
             orderId
         );
 
+    const delivery =
+        await deliveryRepository.findDeliveryByOrderId(
+            order.id
+        );
+
     return {
-        order,
+        order: {
+            ...order,
+            delivery: delivery || null
+        },
         items
     };
 }

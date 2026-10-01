@@ -42,6 +42,36 @@ const frontendUrl =
     process.env.FRONTEND_URL ||
     "http://localhost:3000";
 
+const aiProvider =
+    process.env.AI_PROVIDER || "ollama";
+
+const ollamaBaseUrl =
+    process.env.OLLAMA_BASE_URL ||
+    "http://localhost:11434";
+
+const ollamaModel =
+    process.env.OLLAMA_MODEL ||
+    "qwen3.5:9b";
+
+const ollamaThink =
+    String(
+        process.env.OLLAMA_THINK || "false"
+    ).toLowerCase() === "true";
+
+const aiTimeoutMs =
+    Number(
+        process.env.AI_TIMEOUT_MS || 30000
+    );
+
+if (
+    !Number.isInteger(aiTimeoutMs) ||
+    aiTimeoutMs <= 0
+) {
+    throw new Error(
+        "AI_TIMEOUT_MS must be a positive integer"
+    );
+}
+
 module.exports = {
     port,
     frontendUrl,
@@ -59,5 +89,14 @@ module.exports = {
     },
     geoapify: {
         apiKey: process.env.GEOAPIFY_API_KEY
+    },
+        ai: {
+        provider: aiProvider,
+        timeoutMs: aiTimeoutMs,
+        ollama: {
+            baseUrl: ollamaBaseUrl,
+            model: ollamaModel,
+            think: ollamaThink
+        }
     }
 };

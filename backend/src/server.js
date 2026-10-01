@@ -14,6 +14,7 @@ const deliveryTrackingRoutes =
     require("./routes/deliveryTrackingRoutes");
 const deliveryTrackingUpdateRoutes =
     require("./routes/deliveryTrackingUpdateRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 const pool = require("./db/db");
 const config = require("./config");
 
@@ -68,6 +69,7 @@ app.use(
     "/api/delivery-tracking-updates",
     deliveryTrackingUpdateRoutes
 );
+app.use("/api/ai", aiRoutes);
 
 app.get("/api/health", function (req, res) {
     res.json({

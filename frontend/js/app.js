@@ -3136,6 +3136,14 @@ if (ordersContainer) {
 
             let ordersHtml = "";
 
+            const deliveryStatuses = [
+                "PENDING",
+                "CONFIRMED",
+                "PROCESSING",
+                "SHIPPED",
+                "DELIVERED"
+            ];
+
             orders.forEach(function (order) {
 
                 const orderDate =
@@ -3147,12 +3155,92 @@ if (ordersContainer) {
                 const total =
                     Number(order.total_amount).toFixed(2);
 
-                ordersHtml += `
-                    <article class="order-card" data-testid="order-card" data-order-id="${order.id}">
+                const currentStatus =
+                    String(order.status || "").toUpperCase();
 
-                        <div class="order-card-header" data-testid="order-card-header">
+                const currentStatusIndex =
+                    deliveryStatuses.indexOf(currentStatus);
+
+                let deliveryTimelineHtml = "";
+
+                deliveryStatuses.forEach(function (status, index) {
+
+                    let stepClass = "";
+
+                    if (
+                        currentStatusIndex >= 0 &&
+                        index < currentStatusIndex
+                    ) {
+                        stepClass = "completed";
+                    } else if (
+                        currentStatusIndex >= 0 &&
+                        index === currentStatusIndex
+                    ) {
+                        stepClass = "current";
+                    }
+
+                    const statusLabel =
+                        status.charAt(0) +
+                        status.slice(1).toLowerCase();
+
+                    deliveryTimelineHtml += `
+                        <div
+                            class="delivery-step ${stepClass}"
+                            data-testid="delivery-step"
+                            data-status="${status}"
+                        >
+
+                            <div
+                                class="delivery-step-indicator"
+                                data-testid="delivery-step-indicator"
+                            >
+                                ${
+                                    stepClass === "completed"
+                                        ? "✓"
+                                        : index + 1
+                                }
+                            </div>
+
+                            <span
+                                class="delivery-step-label"
+                                data-testid="delivery-step-label"
+                            >
+                                ${statusLabel}
+                            </span>
+
+                        </div>
+                    `;
+
+                    if (index < deliveryStatuses.length - 1) {
+
+                        const connectorClass =
+                            currentStatusIndex > index
+                                ? "completed"
+                                : "";
+
+                        deliveryTimelineHtml += `
+                            <div
+                                class="delivery-step-connector ${connectorClass}"
+                                data-testid="delivery-step-connector"
+                            ></div>
+                        `;
+                    }
+                });
+
+                ordersHtml += `
+                    <article
+                        class="order-card"
+                        data-testid="order-card"
+                        data-order-id="${order.id}"
+                    >
+
+                        <div
+                            class="order-card-header"
+                            data-testid="order-card-header"
+                        >
 
                             <div>
+
                                 <h2 data-testid="order-number">
                                     Order #${order.id}
                                 </h2>
@@ -3160,40 +3248,68 @@ if (ordersContainer) {
                                 <p data-testid="order-date">
                                     ${formattedDate}
                                 </p>
+
                             </div>
 
-                            <span class="
-                                order-status
-                                order-status-${order.status.toLowerCase()}
-                            " data-testid="order-status">
+                            <span
+                                class="
+                                    order-status
+                                    order-status-${order.status.toLowerCase()}
+                                "
+                                data-testid="order-status"
+                            >
                                 ${order.status}
                             </span>
 
                         </div>
 
-                        <div class="order-card-details" data-testid="order-card-details">
+                        <div
+                            class="order-card-details"
+                            data-testid="order-card-details"
+                        >
 
                             <div>
+
                                 <strong>Total</strong>
+
                                 <span data-testid="order-total">
                                     €${total}
                                 </span>
+
                             </div>
 
                             <div>
+
                                 <strong>Status</strong>
+
                                 <span data-testid="order-status-detail">
                                     ${order.status}
                                 </span>
+
                             </div>
 
                         </div>
 
-                        <div class="order-card-actions" data-testid="order-card-actions">
+                        <div
+                            class="delivery-timeline"
+                            data-testid="delivery-timeline"
+                            data-current-status="${currentStatus}"
+                        >
+
+                            ${deliveryTimelineHtml}
+
+                        </div>
+
+                        <div
+                            class="order-card-actions"
+                            data-testid="order-card-actions"
+                        >
 
                             <a
                                 href="order-confirmation.html?orderId=${order.id}"
-                                class="account-button" data-testid="view-order-details">
+                                class="account-button"
+                                data-testid="view-order-details"
+                            >
                                 View Details
                             </a>
 
