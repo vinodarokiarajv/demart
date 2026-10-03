@@ -1,6 +1,8 @@
 const aiService = require("../services/aiService");
 const productService =
     require("../services/productService");
+const aiProductService =
+    require("../services/aiProductService");
 const orderService = require("../services/orderService");
 const deliveryTrackingService =
     require("../services/deliveryTrackingService");
@@ -29,32 +31,37 @@ async function chat(req, res) {
         const isProductQuestion =
             (orderId === undefined ||
             orderId === null) &&
-            /product|products|price|prices|cost|costs|category|categories|rating|ratings|stock|available|availability|laptop|phone|monitor|mouse|keyboard|router|tablet/i.test(
-                message
+            (
+                /product|products|price|prices|cost|costs|category|categories|rating|ratings|stock|available|availability|laptop|phone|monitor|mouse|keyboard|router|tablet|gaming|storage|networking|offers|offer|discount|discounts/i
+                    .test(message)
+                ||
+                aiProductService
+                    .getState(req.user.id)
+                    .topic === "products"
             );
 
         if (isProductQuestion) {
+
             const products =
                 await productService.getAllProducts();
 
-            const underPriceMatch =
-                message.match(
-                    /(?:under|below|less than)\s*[€]?\s*(\d+(?:[.,]\d{1,2})?)/i
+            const state =
+                aiProductService.updateState(
+                    req.user.id,
+                    message,
+                    products
                 );
 
-            let filteredProducts = products;
+            const filteredProducts =
+                aiProductService.applyFilters(
+                    products,
+                    state
+                );
 
-            if (underPriceMatch) {
-                const maxPrice =
-                    Number(
-                        underPriceMatch[1].replace(",", ".")
-                    );
-
-                filteredProducts =
-                    products.filter(function (product) {
-                        return Number(product.price) < maxPrice;
-                    });
-            }
+            aiProductService.setLastResult(
+                req.user.id,
+                filteredProducts
+            );
 
             context.products =
                 filteredProducts.map(function (product) {
@@ -64,6 +71,131 @@ async function chat(req, res) {
                         price: product.price
                     };
                 });
+
+            const isFollowUp =
+                /^(show me|show|list|display|which|what about|how about|tell me more|more|all|the ones|those|these)/i
+                    .test(message.trim());
+
+            const hasPriceFilter =
+                state.priceFilter !== null;
+
+            const hasProductType =
+                state.productType !== null;
+
+            const hasCategory =
+                state.category !== null;
+
+            if (
+                isFollowUp &&
+                filteredProducts.length > 0
+            ) {
+                return res.json({
+                    message:
+                        aiProductService.buildProductList(
+                            filteredProducts
+                        ),
+                    model: "application-product-filter",
+                    provider: "demart"
+                });
+            }
+
+            if (
+                hasPriceFilter &&
+                (hasProductType || hasCategory)
+            ) {
+                return res.json({
+                    message:
+                        filteredProducts.length === 0
+                            ? "No matching products are currently available."
+                            : aiProductService.buildProductList(
+                                filteredProducts
+                            ),
+                    model: "application-product-filter",
+                    provider: "demart"
+                });
+            }
+
+            const lowerMessage =
+                message.trim().toLowerCase();
+
+            const productCategories =
+                [...new Set(
+                    products
+                        .map(function (product) {
+                            return product.category;
+                        })
+                        .filter(Boolean)
+                )];
+
+            const matchedCategory =
+                aiProductService.findCategory(
+                    message,
+                    products
+                );
+
+            if (matchedCategory) {
+
+                const categoryProducts =
+                    products.filter(function (product) {
+                        return (
+                            product.category &&
+                            product.category.toLowerCase() ===
+                                matchedCategory.toLowerCase()
+                        );
+                    });
+
+                return res.json({
+                    message:
+                        `We have ${categoryProducts.length} ${matchedCategory} product` +
+                        `${categoryProducts.length === 1 ? "" : "s"}. ` +
+                        "Would you like to see all of them, or are you looking for something specific?",
+                    model: "application-product-discovery",
+                    provider: "demart"
+                });
+            }
+
+            const isOfferQuestion =
+                /\boffers?\b|\bdiscounts?\b|\bdeals?\b/i
+                    .test(message);
+
+            if (isOfferQuestion) {
+                return res.json({
+                    message:
+                        "I can help you check available DeMart offers. " +
+                        "Would you like me to check offers for a specific product or category?",
+                    model: "application-product-discovery",
+                    provider: "demart"
+                });
+            }
+
+            const hasSpecificProductType =
+                aiProductService.extractProductType(
+                    message
+                ) !== null;
+
+
+            const isGeneralProductDiscovery =
+                !hasSpecificProductType &&
+                !hasPriceFilter &&
+                /what|which|show|list|tell|have|available|sell|products?/i
+                    .test(message);
+
+            if (isGeneralProductDiscovery) {
+
+                const categoryText =
+                    productCategories.length > 0
+                        ? productCategories.join(", ")
+                        : "several product categories";
+
+                return res.json({
+                    message:
+                        `We currently have products across ${categoryText}. ` +
+                        "What are you looking for? I can help you find products by category, price, rating, or availability. " +
+                        "I can also check whether DeMart has any available offers.",
+                    model: "application-product-discovery",
+                    provider: "demart"
+                });
+            }
         }
 
         if (orderId !== undefined && orderId !== null) {
@@ -162,6 +294,99 @@ async function chat(req, res) {
                             })
                             .join("\n"),
                 model: "application-filter",
+                provider: "demart"
+            });
+        }
+
+        const lowerMessage =
+            message.trim().toLowerCase();
+
+        const productCategories =
+            [...new Set(
+                context.products
+                    .map(function (product) {
+                        return product.category;
+                    })
+                    .filter(Boolean)
+            )];
+
+        const isOfferQuestion =
+            /\boffers?\b|\bdiscounts?\b|\bdeals?\b/i.test(
+                message
+            );
+
+        if (
+            isProductQuestion &&
+            isOfferQuestion
+        ) {
+            return res.json({
+                message:
+                    "I can help you check available DeMart offers. " +
+                    "Would you like me to check offers for a specific product or category?",
+                model: "application-product-discovery",
+                provider: "demart"
+            });
+        }
+
+        const matchedCategory =
+            productCategories.find(function (category) {
+                return lowerMessage ===
+                    category.toLowerCase();
+            });
+
+        if (
+            isProductQuestion &&
+            matchedCategory
+        ) {
+            const categoryProducts =
+                context.products.filter(function (product) {
+                    return (
+                        product.category &&
+                        product.category.toLowerCase() ===
+                            matchedCategory.toLowerCase()
+                    );
+                });
+
+            return res.json({
+                message:
+                    `We have ${categoryProducts.length} ${matchedCategory} product` +
+                    `${categoryProducts.length === 1 ? "" : "s"}. ` +
+                    "Would you like to see all of them, or are you looking for something specific?",
+                model: "application-product-discovery",
+                provider: "demart"
+            });
+        }
+
+        const hasSpecificProductType =
+            /laptop|phone|monitor|mouse|keyboard|router|tablet/i.test(
+                message
+            );
+
+        const hasPriceFilter =
+            /(?:under|below|less than|above|over|more than|between)\s*[€]?\s*\d+/i.test(
+                message
+            );
+
+        const isGeneralProductDiscovery =
+            isProductQuestion &&
+            !hasSpecificProductType &&
+            !hasPriceFilter &&
+            /(?:what|which|show|list|tell|have|available|sell|products?)/i.test(
+                message
+            );
+
+        if (isGeneralProductDiscovery) {
+            const categoryText =
+                productCategories.length > 0
+                    ? productCategories.join(", ")
+                    : "several product categories";
+
+            return res.json({
+                message:
+                    `We currently have products across ${categoryText}. ` +
+                    "What are you looking for? I can help you find products by category, price, rating, or availability. " +
+                    "I can also check whether DeMart has any available offers.",
+                model: "application-product-discovery",
                 provider: "demart"
             });
         }

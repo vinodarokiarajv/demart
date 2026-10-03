@@ -1,28 +1,130 @@
-const storedUser = localStorage.getItem("demartUser");
-
 const currentPage = window.location.pathname;
 
-const isLoginPage = currentPage.endsWith("/login.html");
-const isRegisterPage = currentPage.endsWith("/register.html");
+const isLoginPage =
+    currentPage.endsWith("/login.html");
 
-if (storedUser && (isLoginPage || isRegisterPage)) {
-    window.location.replace("account.html");
-}
+const isRegisterPage =
+    currentPage.endsWith("/register.html");
 
-window.addEventListener("pageshow", function () {
+const protectedPages = [
+    "/cart.html",
+    "/checkout.html",
+    "/orders.html",
+    "/order-confirmation.html",
+    "/account.html"
+];
 
-    const currentStoredUser = localStorage.getItem("demartUser");
+const isProtectedPage =
+    protectedPages.some(function (page) {
+        return currentPage.endsWith(page);
+    });
 
-    const currentPath = window.location.pathname;
+async function validateStoredSession() {
 
-    const onLoginPage = currentPath.endsWith("/login.html");
-    const onRegisterPage = currentPath.endsWith("/register.html");
+    const storedUser =
+        localStorage.getItem("demartUser");
 
-    if (currentStoredUser && (onLoginPage || onRegisterPage)) {
-        window.location.replace("account.html");
+    if (!storedUser) {
+
+        if (isProtectedPage) {
+            window.location.replace("login.html");
+        }
+
+        return;
     }
 
-});
+    let user;
+
+    try {
+
+        user = JSON.parse(storedUser);
+
+    } catch (error) {
+
+        localStorage.removeItem("demartUser");
+
+        if (isProtectedPage) {
+            window.location.replace("login.html");
+        }
+
+        return;
+    }
+
+    if (!user || !user.token) {
+
+        localStorage.removeItem("demartUser");
+
+        if (isProtectedPage) {
+            window.location.replace("login.html");
+        }
+
+        return;
+    }
+
+    try {
+
+        const response = await fetch(
+            "/api/auth/me",
+            {
+                method: "GET",
+                headers: {
+                    "Authorization":
+                        `Bearer ${user.token}`
+                }
+            }
+        );
+
+        if (response.status === 401) {
+
+            localStorage.removeItem(
+                "demartUser"
+            );
+
+            if (isProtectedPage) {
+                window.location.replace(
+                    "login.html"
+                );
+            }
+
+            return;
+        }
+
+        if (
+            !response.ok
+        ) {
+
+            console.error(
+                "Session validation failed:",
+                response.status
+            );
+
+            return;
+        }
+
+        if (
+            isLoginPage ||
+            isRegisterPage
+        ) {
+            window.location.replace(
+                "account.html"
+            );
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Session validation error:",
+            error
+        );
+
+        /*
+         * Do not log the user out for a
+         * network/server failure.
+         */
+    }
+}
+
+validateStoredSession();
 
 const registerForm = document.getElementById("register-form");
 
@@ -3486,3 +3588,646 @@ function updateActiveNavigation() {
     });
 }
 updateActiveNavigation();
+
+/* ========================================
+   DeMart AI Assistant
+   ======================================== */
+
+(function initializeAIAssistant() {
+
+    const customerPages = [
+        "/home.html",
+        "/products.html",
+        "/product-details.html",
+        "/cart.html",
+        "/checkout.html",
+        "/orders.html",
+        "/order-confirmation.html",
+        "/account.html"
+    ];
+
+    const currentPath = window.location.pathname;
+
+    const isCustomerPage =
+        customerPages.some(function (page) {
+            return currentPath.endsWith(page);
+        });
+
+    if (!isCustomerPage) {
+        return;
+    }
+
+    if (
+        document.querySelector(
+            "[data-testid='ai-assistant']"
+        )
+    ) {
+        return;
+    }
+
+    const assistant =
+        document.createElement("div");
+
+    assistant.className =
+        "ai-assistant";
+
+    assistant.setAttribute(
+        "data-testid",
+        "ai-assistant"
+    );
+
+    assistant.innerHTML = `
+        <button
+            type="button"
+            class="ai-assistant-launcher"
+            data-testid="ai-assistant-launcher"
+            aria-label="Open DeMart AI Assistant"
+            aria-expanded="false"
+        >
+            AI
+        </button>
+
+        <section
+            class="ai-assistant-panel"
+            data-testid="ai-assistant-panel"
+            aria-label="DeMart AI Assistant"
+            hidden
+        >
+            <div class="ai-assistant-header">
+                <div>
+                    <strong>DeMart AI Assistant</strong>
+                    <span>How can I help?</span>
+                </div>
+
+                <button
+                    type="button"
+                    class="ai-assistant-close"
+                    data-testid="ai-assistant-close"
+                    aria-label="Close DeMart AI Assistant"
+                >
+                    ×
+                </button>
+            </div>
+
+            <div
+                class="ai-assistant-messages"
+                data-testid="ai-assistant-messages"
+                aria-live="polite"
+            ></div>
+
+            <form
+                class="ai-assistant-form"
+                data-testid="ai-assistant-form"
+            >
+                <label
+                    class="sr-only"
+                    for="ai-assistant-input"
+                >
+                    Ask DeMart AI Assistant
+                </label>
+
+                <input
+                    id="ai-assistant-input"
+                    type="text"
+                    class="ai-assistant-input"
+                    data-testid="ai-assistant-input"
+                    placeholder="Ask something..."
+                    autocomplete="off"
+                />
+
+                <button
+                    type="button"
+                    class="ai-assistant-voice"
+                    data-testid="ai-assistant-voice"
+                    aria-label="Start voice input"
+                    title="Start voice input"
+                >
+                    🎙️
+                </button>
+
+                <button
+                    type="submit"
+                    class="ai-assistant-send"
+                    data-testid="ai-assistant-send"
+                >
+                    Send
+                </button>
+            </form>
+        </section>
+    `;
+
+    document.body.appendChild(assistant);
+
+    const launcher =
+        assistant.querySelector(
+            "[data-testid='ai-assistant-launcher']"
+        );
+
+    const panel =
+        assistant.querySelector(
+            "[data-testid='ai-assistant-panel']"
+        );
+
+    const closeButton =
+        assistant.querySelector(
+            "[data-testid='ai-assistant-close']"
+        );
+
+    const input =
+        assistant.querySelector(
+            "[data-testid='ai-assistant-input']"
+        );
+
+    const form =
+        assistant.querySelector(
+            "[data-testid='ai-assistant-form']"
+        );
+
+    const messages =
+        assistant.querySelector(
+            "[data-testid='ai-assistant-messages']"
+        );
+
+    const voiceButton =
+        assistant.querySelector(
+            "[data-testid='ai-assistant-voice']"
+        );
+
+    const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
+
+    let speechRecognition = null;
+
+    if (SpeechRecognition) {
+        speechRecognition =
+            new SpeechRecognition();
+
+        speechRecognition.continuous = false;
+        speechRecognition.interimResults = false;
+        speechRecognition.lang = "en-US";
+
+        speechRecognition.addEventListener(
+            "start",
+            function () {
+                voiceButton.disabled = true;
+                voiceButton.setAttribute(
+                    "aria-label",
+                    "Listening"
+                );
+                voiceButton.setAttribute(
+                    "title",
+                    "Listening..."
+                );
+            }
+        );
+
+        speechRecognition.addEventListener(
+            "result",
+            function (event) {
+                const transcript =
+                    event.results[0][0].transcript;
+
+                input.value = transcript;
+                input.focus();
+            }
+        );
+
+        speechRecognition.addEventListener(
+            "error",
+            function (event) {
+                console.error(
+                    "Speech recognition error:",
+                    event.error
+                );
+            }
+        );
+
+        speechRecognition.addEventListener(
+            "end",
+            function () {
+                voiceButton.disabled = false;
+                voiceButton.setAttribute(
+                    "aria-label",
+                    "Start voice input"
+                );
+                voiceButton.setAttribute(
+                    "title",
+                    "Start voice input"
+                );
+                input.focus();
+            }
+        );
+
+        voiceButton.addEventListener(
+            "click",
+            function () {
+                speechRecognition.start();
+            }
+        );
+    } else {
+        voiceButton.disabled = true;
+        voiceButton.setAttribute(
+            "aria-label",
+            "Voice input is not supported"
+        );
+        voiceButton.setAttribute(
+            "title",
+            "Voice input is not supported by this browser"
+        );
+    }
+
+    const sendButton =
+        assistant.querySelector(
+            "[data-testid='ai-assistant-send']"
+        );
+
+    const speechSynthesisSupported =
+        "speechSynthesis" in window;
+
+    function speakAssistantResponse(text) {
+        if (
+            !speechSynthesisSupported ||
+            !text
+        ) {
+            return;
+        }
+
+        window.speechSynthesis.cancel();
+
+        const utterance =
+            new SpeechSynthesisUtterance(text);
+
+        utterance.lang = "en-US";
+        utterance.rate = 1;
+        utterance.pitch = 1;
+
+        window.speechSynthesis.speak(
+            utterance
+        );
+    }
+
+    const storedAssistantUser =
+        JSON.parse(
+            localStorage.getItem("demartUser")
+        );
+
+    const storageKey =
+        storedAssistantUser &&
+        storedAssistantUser.id
+            ? `demartAIAssistantMessages:user:${storedAssistantUser.id}`
+            : null;
+
+    function addMessage(
+        text,
+        type,
+        save = true
+    ) {
+        const messageElement =
+            document.createElement("div");
+
+        messageElement.className =
+            "ai-assistant-message " +
+            `ai-assistant-message--${type}`;
+
+        messageElement.textContent = text;
+
+        messages.appendChild(
+            messageElement
+        );
+
+        messages.scrollTop =
+            messages.scrollHeight;
+
+        if (save) {
+            saveConversation();
+        }
+
+        return messageElement;
+    }
+
+    function saveConversation() {
+
+        if (!storageKey) {
+            return;
+        }
+
+        const conversation =
+            Array.from(
+                messages.querySelectorAll(
+                    ".ai-assistant-message"
+                )
+            ).map(function (element) {
+
+                return {
+                    type:
+                        element.classList.contains(
+                            "ai-assistant-message--user"
+                        )
+                            ? "user"
+                            : "bot",
+                    text:
+                        element.textContent
+                };
+
+            });
+
+        sessionStorage.setItem(
+            storageKey,
+            JSON.stringify(conversation)
+        );
+    }
+
+    function restoreConversation() {
+
+        if (!storageKey) {
+
+            addMessage(
+                "Please log in to use the DeMart AI Assistant.",
+                "bot"
+            );
+
+            return;
+        }
+
+        const storedConversation =
+            sessionStorage.getItem(
+                storageKey
+            );
+
+        if (!storedConversation) {
+
+            addMessage(
+                "Hi! I can help with DeMart products, orders, and delivery information.",
+                "bot"
+            );
+
+            return;
+        }
+
+        try {
+
+            const conversation =
+                JSON.parse(
+                    storedConversation
+                );
+
+            if (
+                !Array.isArray(
+                    conversation
+                ) ||
+                conversation.length === 0
+            ) {
+                addMessage(
+                    "Hi! I can help with DeMart products, orders, and delivery information.",
+                    "bot"
+                );
+
+                return;
+            }
+
+            conversation.forEach(
+                function (message) {
+
+                    if (
+                        message &&
+                        (
+                            message.type === "user" ||
+                            message.type === "bot"
+                        ) &&
+                        typeof message.text ===
+                            "string"
+                    ) {
+                        addMessage(
+                            message.text,
+                            message.type,
+                            false
+                        );
+                    }
+
+                }
+            );
+
+        } catch (error) {
+
+            console.error(
+                "AI conversation restore error:",
+                error
+            );
+
+            sessionStorage.removeItem(
+                storageKey
+            );
+
+            addMessage(
+                "Hi! I can help with DeMart products, orders, and delivery information.",
+                "bot"
+            );
+        }
+    }
+
+    sessionStorage.removeItem(
+        "demartAIAssistantMessages"
+    );
+
+    restoreConversation();
+
+    launcher.addEventListener(
+        "click",
+        function () {
+
+            const isOpen =
+                !panel.hasAttribute("hidden");
+
+            if (isOpen) {
+
+                panel.setAttribute(
+                    "hidden",
+                    ""
+                );
+
+                launcher.setAttribute(
+                    "aria-expanded",
+                    "false"
+                );
+
+                return;
+            }
+
+            panel.removeAttribute(
+                "hidden"
+            );
+
+            launcher.setAttribute(
+                "aria-expanded",
+                "true"
+            );
+
+            input.focus();
+        }
+    );
+
+    closeButton.addEventListener(
+        "click",
+        function () {
+
+            panel.setAttribute(
+                "hidden",
+                ""
+            );
+
+            launcher.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+
+            launcher.focus();
+        }
+    );
+
+        form.addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
+
+            const message =
+                input.value.trim();
+
+            if (!message) {
+                return;
+            }
+
+            const user = JSON.parse(
+                localStorage.getItem(
+                    "demartUser"
+                )
+            );
+
+            if (!user || !user.token) {
+
+                addMessage(
+                    "Please log in to use the DeMart AI Assistant.",
+                    "bot"
+                );
+
+                return;
+            }
+
+            /*
+             * Stop any currently playing assistant response
+             * as soon as the user submits a new question.
+             */
+            if (speechSynthesisSupported) {
+                window.speechSynthesis.cancel();
+            }
+
+            addMessage(
+                message,
+                "user"
+            );
+
+            input.value = "";
+
+            const loadingMessage =
+                addMessage(
+                    "Thinking...",
+                    "bot",
+                    false
+                );
+
+            try {
+
+                const orderMatch =
+                    message.match(
+                        /\border\s*#?\s*(\d+)\b/i
+                    );
+
+                const requestBody = {
+                    message: message
+                };
+
+                if (orderMatch) {
+                    requestBody.orderId =
+                        Number(
+                            orderMatch[1]
+                        );
+                }
+
+                const response =
+                    await fetch(
+                        "/api/ai/chat",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type":
+                                    "application/json",
+                                "Authorization":
+                                    `Bearer ${user.token}`
+                            },
+                            body:
+                                JSON.stringify(
+                                    requestBody
+                                )
+                        }
+                    );
+
+                const data =
+                    await response.json();
+
+                loadingMessage.remove();
+
+                if (!response.ok) {
+
+                    if (response.status === 404) {
+
+                        throw new Error(
+                            "That order is not available for your account."
+                        );
+                    }
+
+                    throw new Error(
+                        data.message ||
+                        "AI request failed"
+                    );
+                }
+
+                const assistantResponse =
+                    data.message ||
+                    "I could not generate a response.";
+
+                addMessage(
+                    assistantResponse,
+                    "bot"
+                );
+
+                speakAssistantResponse(
+                    assistantResponse
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "AI assistant error:",
+                    error
+                );
+
+                loadingMessage.textContent =
+                    error.message ===
+                    "That order is not available for your account."
+                        ? "That order is not available for your account."
+                        : "Sorry, the AI assistant is currently unavailable.";
+
+                saveConversation();
+
+            } finally {
+
+                messages.scrollTop =
+                    messages.scrollHeight;
+
+                input.focus();
+            }
+        }
+    );
+
+})();
